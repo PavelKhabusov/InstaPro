@@ -8,10 +8,9 @@ import {
   where,
 } from "firebase/firestore";
 import { useEffect, useRef, useState } from "react";
-import { useSession } from "next-auth/react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { db } from "../firebase";
+import { db, useAuthSession } from "../firebase";
 import Post from "./Post";
 import Loading from "./Loading";
 import { useRouter } from "next/router";
@@ -29,7 +28,7 @@ const Posts = ({
   showFollowers,
   showFollowings,
 }) => {
-  const { data: session } = useSession();
+  const session = useAuthSession();
   const [posts, setPosts] = useState(undefined);
   const [postLikes, setPostLikes] = useState([]);
   const [postComments, setPostComments] = useState([]);
@@ -47,7 +46,7 @@ const Posts = ({
     if (posts) {
       setLoad(true);
     }
-  }, [posts]);
+  }, [setLoad, posts]);
 
   useEffect(() => {
     if (router.pathname === "/") {
@@ -63,7 +62,7 @@ const Posts = ({
       setOpenLikes(false);
       unsub();
     };
-  }, [router.pathname]);
+  });
 
   useEffect(() => {
     if (router.pathname !== "/" && profile) {
@@ -80,7 +79,7 @@ const Posts = ({
       );
     }
     return () => unsub();
-  }, [profile, router.pathname]);
+  });
 
   const deletePost = async (id) => {
     if (confirm("Do you really want to delete this post?")) {

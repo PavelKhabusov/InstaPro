@@ -1,5 +1,5 @@
 import { ArrowLeftIcon, SearchIcon } from "@heroicons/react/outline";
-import { useSession } from "next-auth/react";
+import {useAuthSession} from "../firebase";
 import Image from "next/image";
 import { useState } from "react";
 import Moment from "react-moment";
@@ -7,7 +7,7 @@ import { getUserProfilePic, getUser, getName } from "../utils/utilityFunctions";
 
 const Likes = ({ setOpenLikes, users, likes, router }) => {
   const [search, setSearch] = useState("");
-  const { data: session } = useSession();
+  const session = useAuthSession(); 
 
   return (
     <div className="w-full md:max-w-3xl m-auto bg-gray-100 dark:text-gray-200 dark:bg-gray-900 fixed top-0 z-50 h-screen flex flex-col">
@@ -70,11 +70,11 @@ const Likes = ({ setOpenLikes, users, likes, router }) => {
 
                 <div className="ml-3">
                   <h1
-                    onClick={() => router.push(`/profile/${like.username}`)}
+                    onClick={() => router.push(`profile/${like.username}`)}
                     className="font-semibold mt-1 cursor-pointer flex space-x-1 items-center"
                   >
                     {getName(getUser(like.username, users))}
-                    {like.username === "hurairayounas" && (
+                    {like.username === "павелхабусов" && (
                       <div className="relative h-4 w-4">
                         <Image
                           src={require("../public/verified.png")}
@@ -98,7 +98,7 @@ const Likes = ({ setOpenLikes, users, likes, router }) => {
               </div>
               {like.username !== session?.user.username && (
                 <button
-                  onClick={() => router.push(`/profile/${like.username}`)}
+                  onClick={() => router.push(`profile/${like.username}`)}
                   className="bg-gray-900 dark:bg-slate-600 dark:text-white bg-opacity-80 dark:bg-opacity-90 border-gray-400 py-1 px-6 text-xs font-semibold rounded-md"
                 >
                   Profile

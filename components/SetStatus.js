@@ -14,7 +14,7 @@ const SetStatus = ({ username, active, setActive }) => {
       window.addEventListener("online", () => setActive(true));
       window.addEventListener("offline", () => setActive(false));
     };
-  }, []);
+  }, [setActive]);
 
   useEffect(() => {
     const setStatus = async () => {

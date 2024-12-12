@@ -1,8 +1,7 @@
 import { ArrowLeftIcon, TrashIcon } from "@heroicons/react/solid";
 import Moment from "react-moment";
 import Image from "next/image";
-import { useRef, useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/router";
 import EditGroup from "../../components/EditGroup";
 import {
@@ -14,7 +13,7 @@ import {
   updateDoc,
   onSnapshot,
 } from "firebase/firestore";
-import { db, storage } from "../../firebase";
+import { db, storage, useAuthSession } from "../../firebase";
 import Loading from "../../components/Loading";
 import { ref, getDownloadURL, uploadBytesResumable } from "firebase/storage";
 import {
@@ -41,7 +40,7 @@ import useRecorder from "../../components/useRecorder";
 
 const Chat = () => {
   const [text, setText] = useState("");
-  const { data: session } = useSession();
+  const session = useAuthSession();
   const router = useRouter();
   const { id } = router.query;
   const messagesEndRef = useRef(null);
@@ -106,35 +105,33 @@ const Chat = () => {
         unsubGroups();
       }
     };
-  }, [router]);
+  }, [id, router]);
 
   useEffect(() => {
     if (chat !== {} && !id?.includes("group")) {
       setUser(getUser(getOtherEmail(chat, session?.user), users));
     }
-  }, [chat, id, users]);
+  }, [session?.user, chat, id, users]);
 
   useEffect(() => {
     if (audioURL) {
-      sendAudio();
+      async () => {
+        const check = id?.includes("group") ? "groups" : "chats";
+        await addDoc(collection(db, check, id, "messages"), {
+          audio: audioURL,
+          type: "audio/ogg",
+          username: session.user.username,
+          timeStamp: serverTimestamp(),
+        }).then(async () => {
+          msgSend("audio");
+          await updateDoc(doc(db, check, id), {
+            timeStamp: serverTimestamp(),
+          });
+          audioURL = "";
+        });
+      };
     }
-  }, [audioURL]);
-
-  const sendAudio = async () => {
-    const check = id?.includes("group") ? "groups" : "chats";
-    await addDoc(collection(db, check, id, "messages"), {
-      audio: audioURL,
-      type: "audio/ogg",
-      username: session.user.username,
-      timeStamp: serverTimestamp(),
-    }).then(async () => {
-      msgSend("audio");
-      await updateDoc(doc(db, check, id), {
-        timeStamp: serverTimestamp(),
-      });
-      audioURL = "";
-    });
-  };
+  });
 
   const sendMessage = async (e) => {
     e.preventDefault();
@@ -343,6 +340,13 @@ const Chat = () => {
               <div className="flex items-center justify-center p-[1px] rounded-full object-contain mx-2">
                 <div className="relative w-12 h-12">
                   <Image
+                    loader={ () => chat?.image
+                        ? chat.image
+                        : user?.profImg
+                        ? user.profImg
+                        : user?.image
+                        ? user.image
+                        : require("../../public/userimg.jpg") }
                     loading="eager"
                     layout="fill"
                     src={
@@ -361,7 +365,7 @@ const Chat = () => {
               </div>
               <button
                 disabled={user ? (chat?.name ? true : false) : true}
-                onClick={() => router.push(`/profile/${user?.username}`)}
+                onClick={() => router.push(`profile/${user?.username}`)}
                 className="text-left"
               >
                 <div className="flex items-center">
@@ -374,7 +378,7 @@ const Chat = () => {
                       ? user.username
                       : "Loading..."}
                   </h1>
-                  {!chat?.name && user?.username === "hurairayounas" && (
+                  {!chat?.name && user?.username === "павелхабусов" && (
                     <div className="relative h-4 w-4">
                       <Image
                         src={require("../../public/verified.png")}
@@ -591,7 +595,7 @@ const Chat = () => {
                       <p>{messages[messages.length - 1 - i]?.data().text}</p>
                       {messages[messages.length - 1 - i].data().image && (
                         <div className="my-2 shadow-md p-2">
-                          <img
+                          <Image
                             src={messages[messages.length - 1 - i].data().image}
                             alt="img"
                           />

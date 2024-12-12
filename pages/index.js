@@ -1,18 +1,19 @@
+import { useEffect, useState } from "react";
 import Head from "next/head";
 import Header from "../components/Header";
 import Feed from "../components/Feed";
 import Model from "../components/Model";
-import { useSession } from "next-auth/react";
 import { doc, setDoc, serverTimestamp, getDoc } from "firebase/firestore";
-import { db } from "../firebase";
+import { db, useAuthSession } from "../firebase";
 import { useRecoilState } from "recoil";
 import { themeState, userActivity, beamsState } from "../atoms/states";
-import { useEffect, useState } from "react";
-import initBeams from "../components/initBeams";
+// import initBeams from "../components/initBeams";
 import { toast } from "react-toastify";
+import { useRouter } from "next/router";
 
 export default function Home() {
-  const { data: session } = useSession();
+  const router = useRouter();
+  const session = useAuthSession();
   const [darkMode, setDarkMode] = useRecoilState(themeState);
   const [beamsInitialized, setBeamsInitialized] = useRecoilState(beamsState);
   const [load, setLoad] = useState(false);
@@ -24,7 +25,7 @@ export default function Home() {
     setDarkMode(theme);
     const beams = JSON.parse(localStorage.getItem("beamsState"));
     setBeamsInitialized(beams);
-  }, []);
+  }, [setBeamsInitialized, setDarkMode]);
 
   useEffect(() => {
     localStorage.setItem("theme", JSON.stringify(darkMode));
@@ -52,11 +53,11 @@ export default function Home() {
         }
       );
       if (typeof Notification !== "undefined" && !beamsInitialized) {
-        initBeams(session.user.uid, session.user.username, setBeamsInitialized);
+        // initBeams(session.user.uid, session.user.username, setBeamsInitialized);
       }
     }
     setActive(true);
-  }, [session, beamsInitialized]);
+  }, [user, setActive, session, beamsInitialized]);
 
   const callback = (entries) => {
     entries.forEach((entry) => {
@@ -89,8 +90,8 @@ export default function Home() {
       }`}
     >
       <Head>
-        <title>InstaPro</title>
-        <link rel="icon" href="/favicon.ico" />
+        <title>Kartoteka</title>
+        <link rel="icon" href={`${router.basePath}/favicon.ico`} />
       </Head>
       <Header darkMode={darkMode} setDarkMode={setDarkMode} user={user} />
       <Feed setLoad={setLoad} user={user} />

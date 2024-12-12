@@ -1,6 +1,5 @@
-import { db } from "../firebase";
+import { db, useAuthSession } from "../firebase";
 import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
 import Header from "../components/Header";
 import { UserAddIcon, UserGroupIcon, SearchIcon } from "@heroicons/react/solid";
 import {
@@ -31,7 +30,7 @@ import Image from "next/image";
 import sendPush from "../utils/sendPush";
 
 const Chats = () => {
-  const { data: session } = useSession();
+  const session = useAuthSession();
   const router = useRouter();
   const [validChats, setValidChats] = useState([]);
   const [validGroups, setValidGroups] = useState([]);
@@ -184,7 +183,7 @@ const Chats = () => {
   };
 
   const redirect = (id) => {
-    router.push(`/chat/${id}`);
+    router.push(`chat/${id}`);
   };
 
   if (!session) return <Loading />;
@@ -211,7 +210,7 @@ const Chats = () => {
                 </div>
                 <h1
                   onClick={() =>
-                    router.push(`/profile/${session?.user.username}`)
+                    router.push(`profile/${session?.user.username}`)
                   }
                   className="font-semibold ml-2"
                 >

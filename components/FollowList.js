@@ -93,11 +93,11 @@ const FollowList = ({
                   </div>
                   <div className="ml-3">
                     <button
-                      onClick={() => router.push(`/profile/${user.username}`)}
+                      onClick={() => router.push(`profile/${user.username}`)}
                       className="font-bold cursor-pointer flex items-center"
                     >
                       {getName(getUser(user.username, users))}
-                      {user.username === "hurairayounas" && (
+                      {user.username === "павелхабусов" && (
                         <div className="relative h-4 w-4">
                           <Image
                             src={require("../public/verified.png")}
@@ -124,7 +124,7 @@ const FollowList = ({
                 </div>
                 {user.username !== currUsername && (
                   <button
-                    onClick={() => router.push(`/profile/${user.username}`)}
+                    onClick={() => router.push(`profile/${user.username}`)}
                     className="bg-slate-600 py-1 px-6 text-xs font-semibold rounded-md text-white"
                   >
                     Profile

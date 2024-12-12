@@ -1,11 +1,11 @@
 {
     "theme_color": "#58CCED",
-    "background_color": "#58CCED",
-    "display": "standalone",
+    "background_color": "#171717",
+    "display": "export",
     "scope": "/",
-    "start_url": "/",
-    "name": "InstaPro",
-    "short_name": "InstaPro",
+    "start_url": "/social/",
+    "name": "Kartoteka",
+    "short_name": "Kartoteka",
     "description": "This is a instagram clone which is fully working and connected with firestore backend",
     "icons": [
         {

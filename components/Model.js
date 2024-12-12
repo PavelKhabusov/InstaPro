@@ -4,15 +4,14 @@ import { Dialog, Transition } from "@headlessui/react";
 import { CameraIcon } from "@heroicons/react/outline";
 import { VideoCameraIcon, PhotographIcon } from "@heroicons/react/solid";
 import { Fragment, useRef, useState } from "react";
-import { db, storage } from "../firebase";
+import { db, storage, useAuthSession } from "../firebase";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-import { useSession } from "next-auth/react";
 import { ref, getDownloadURL, uploadBytesResumable } from "firebase/storage";
 import { uuidv4 } from "@firebase/util";
 import { toast } from "react-toastify";
 
 const Model = () => {
-  const { data: session } = useSession();
+  const session = useAuthSession();
   const [storyModel, setStoryModel] = useRecoilState(storyState);
   const [darkMode] = useRecoilState(themeState);
   const [open, setOpen] = useRecoilState(modelState);

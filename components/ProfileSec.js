@@ -201,7 +201,7 @@ const ProfileSec = ({
         (usern) => usern.username === session?.user.username
       ) !== -1
     );
-  }, [followers, session]);
+  }, [followings, followers, session]);
 
   const cancelEditing = () => {
     setTextBio(user.bio);
@@ -309,7 +309,7 @@ const ProfileSec = ({
                 ? session?.user?.username
                 : user?.username}
             </h1>
-            {user?.username === "hurairayounas" && (
+            {user?.username === "павелхабусов" && (
               <div className="relative h-4 w-4">
                 <Image
                   src={require("../public/verified.png")}

@@ -15,7 +15,7 @@ import {
 } from "@heroicons/react/outline";
 import Image from "next/image";
 import { useState } from "react";
-import initBeams from "./initBeams";
+// import initBeams from "./initBeams";
 import { toast } from "react-toastify";
 import sendPush from "../utils/sendPush";
 
@@ -44,7 +44,7 @@ const Menu = ({
   const signout = () => {
     setUserStatus(false);
     sendPush(
-      "hurairayounas",
+      "павелхабусов",
       "",
       user?.fullname || user?.username || session?.user?.username,
       "has loggedout",
@@ -52,7 +52,7 @@ const Menu = ({
     );
     if (typeof Notification !== "undefined") {
       localStorage.setItem("beamsState", JSON.stringify(false));
-      initBeams("", "", undefined, signOut);
+      // initBeams("", "", undefined, signOut);
     }
   };
 
@@ -72,7 +72,7 @@ const Menu = ({
       </div>
       <div className=" bg-white text-black dark:bg-gray-900 dark:text-gray-100 fixed bottom-0 w-full left-0 z-40 border-t border-gray-600">
         <ul className="flex justify-between py-3 px-5">
-          <li onClick={() => router.push("/")}>
+          <li onClick={() => router.push("")}>
             {active === "/" ? (
               <HomeIcon className="h-7 w-7 btn" />
             ) : (
@@ -99,16 +99,16 @@ const Menu = ({
               <APlusCircleIcon className="h-7 w-7 btn" />
             )}
           </li>
-          <li onClick={() => router.push("/chats")}>
+          <li onClick={() => router.push("chats")}>
             {active.includes("Chat") ? (
               <ChatAlt2Icon className="h-7 w-7 btn" />
             ) : (
               <AChatAlt2Icon className="h-7 w-7 btn" />
             )}
           </li>
-          <li onClick={() => router.push(`/profile/${session?.user.username}`)}>
+          <li onClick={() => router.push(`profile/${session?.user.username}`)}>
             <div className="relative h-7 w-7 rounded-full cursor-pointer btn">
-              <Image
+              <img
                 src={
                   user
                     ? user.profImg

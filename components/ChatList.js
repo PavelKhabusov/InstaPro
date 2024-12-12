@@ -52,7 +52,7 @@ const ChatList = ({
         unsub();
       }
     };
-  }, [user]);
+  }, [doc, user]);
 
   const deleteChat = async () => {
     const deletingWhat = id?.includes("group") ? "groups" : "chats";
@@ -175,7 +175,7 @@ const ChatList = ({
                 ? currUser.fullname
                 : currUser?.username}
             </h1>
-            {!group && currUser?.username === "hurairayounas" && (
+            {!group && currUser?.username === "павелхабусов" && (
               <div className="relative h-4 w-4">
                 <Image
                   src={require("../public/verified.png")}

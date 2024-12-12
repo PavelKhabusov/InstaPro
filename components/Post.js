@@ -22,7 +22,7 @@ import {
   setDoc,
   updateDoc,
 } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { db } from "../firebase";
 import Moment from "react-moment";
 import { postView } from "../atoms/states";
@@ -58,7 +58,7 @@ const Post = ({
 
   useEffect(() => {
     setView(false);
-  }, [router]);
+  }, [setView, router]);
 
   useEffect(() => {
     unsubscribe = onSnapshot(
@@ -69,7 +69,7 @@ const Post = ({
       (snapshot) => setComments(snapshot.docs)
     );
     return () => unsub();
-  }, [post.id]);
+  });
 
   useEffect(() => {
     if (likes) {
@@ -124,7 +124,7 @@ const Post = ({
     if (openComments) {
       setPostComments(comments);
     }
-  }, [comments]);
+  }, [openComments, setPostComments,comments]);
 
   const getLength = (comments) => {
     let len = comments?.length;
@@ -182,7 +182,7 @@ const Post = ({
                 ></span>
               </div>
               <button
-                onClick={() => router.push(`/profile/${post.data().username}`)}
+                onClick={() => router.push(`profile/${post.data().username}`)}
                 className="font-bold dark:text-gray-200 cursor-pointer w-auto"
               >
                 {user
@@ -191,7 +191,7 @@ const Post = ({
                     : user.username
                   : post.data().username}
               </button>
-              {user?.username === "hurairayounas" && (
+              {user?.username === "павелхабусов" && (
                 <div className="relative h-4 w-4">
                   <Image
                     src={require("../public/verified.png")}
@@ -275,7 +275,7 @@ const Post = ({
               )}
             </p>
             <button
-              onClick={() => router.push(`/profile/${post.data().username}`)}
+              onClick={() => router.push(`profile/${post.data().username}`)}
               className="font-bold relative mr-1"
             >
               {user?.fullname ? user.fullname : post?.data().username}

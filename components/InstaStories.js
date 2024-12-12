@@ -1,16 +1,15 @@
 import { useEffect, useState } from "react";
 import { PlusIcon } from "@heroicons/react/outline";
-import { useSession } from "next-auth/react";
 import { storyState, modelState, watchStory } from "../atoms/states";
 import { useRecoilState } from "recoil";
 import { useCollectionData } from "react-firebase-hooks/firestore";
 import { collection } from "firebase/firestore";
-import { db } from "../firebase";
+import { db, useAuthSession } from "../firebase";
 import Image from "next/image";
 import { toast } from "react-toastify";
 
 const InstaStories = ({ user, openLikes, openComments }) => {
-  const { data: session } = useSession();
+  const session = useAuthSession();
   const [storyOpen, setStoryOpen] = useRecoilState(storyState);
   const [watch, setWatch] = useRecoilState(watchStory);
   const [open, setOpen] = useRecoilState(modelState);
@@ -37,7 +36,7 @@ const InstaStories = ({ user, openLikes, openComments }) => {
     if (!fLoading && !uLoading && validUsers.length === 0) {
       getValidUsers();
     }
-  }, [fLoading, uLoading, user]);
+  }, [users, validUsers.length, followings, fLoading, uLoading, user]);
 
   const postStories = () => {
     toast("Note: Stories are in development right now", {

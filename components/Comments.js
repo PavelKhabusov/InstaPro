@@ -9,11 +9,10 @@ import {
   Timestamp,
   updateDoc,
 } from "firebase/firestore";
-import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import Moment from "react-moment";
-import { db } from "../firebase";
+import { db, useAuthSession } from "../firebase";
 import sendPush from "../utils/sendPush";
 import { getUserProfilePic, getUser, getName } from "../utils/utilityFunctions";
 
@@ -27,7 +26,7 @@ const Comments = ({
   deleteDoc,
   post,
 }) => {
-  const { data: session } = useSession();
+  const session = useAuthSession(); 
   const [subCommentRef, setSubCommentRef] = useState({});
   const [openIndex, setOpenIndex] = useState(
     new Array(comments?.length).fill(-1)
@@ -190,7 +189,7 @@ const Comments = ({
               <div className="text-md -mb-1">
                 <span
                   onClick={() =>
-                    router.push(`/profile/${post.data().username}`)
+                    router.push(`profile/${post.data().username}`)
                   }
                   className="font-bold cursor-pointer"
                 >
@@ -229,7 +228,7 @@ const Comments = ({
                 <div className="text-sm">
                   <span
                     onClick={() =>
-                      router.push(`/profile/${comment?.data().username}`)
+                      router.push(`profile/${comment?.data().username}`)
                     }
                     className="font-bold cursor-pointer relative"
                   >
@@ -298,7 +297,7 @@ const Comments = ({
                       <div className="text-sm">
                         <span
                           onClick={() =>
-                            router.push(`/profile/${subCom.username}`)
+                            router.push(`profile/${subCom.username}`)
                           }
                           className="font-bold cursor-pointer relative"
                         >

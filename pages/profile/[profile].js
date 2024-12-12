@@ -1,4 +1,3 @@
-import { useSession } from "next-auth/react";
 import { useRecoilState } from "recoil";
 import {
   themeState,
@@ -13,13 +12,13 @@ import ProfileSec from "../../components/ProfileSec";
 import FollowList from "../../components/FollowList";
 import Loading from "../../components/Loading";
 import { useEffect, useState } from "react";
-import { db } from "../../firebase";
+import { db, useAuthSession } from "../../firebase";
 import { useRouter } from "next/router";
 import { collection, query, orderBy } from "firebase/firestore";
 import { useCollectionData } from "react-firebase-hooks/firestore";
 
 const Profile = () => {
-  const { data: session } = useSession();
+  const session = useAuthSession();
   const router = useRouter();
   const [darkMode, setDarkMode] = useRecoilState(themeState);
   const [view, setView] = useRecoilState(postView);
@@ -78,7 +77,7 @@ const Profile = () => {
       setOpenComments(false);
       setOpenLikes(false);
     };
-  }, [load, view]);
+  }, [session, setOpenComments, setOpenLikes, load, view]);
 
   return (
     <>

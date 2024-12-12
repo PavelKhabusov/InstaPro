@@ -180,7 +180,7 @@ const GroupMembers = ({
                 <ul className="py-1 text-sm text-gray-700 dark:text-gray-200">
                   <li>
                     <button
-                      onClick={() => router.push(`/profile/${user?.username}`)}
+                      onClick={() => router.push(`profile/${user?.username}`)}
                       className="flex items-center w-full py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white text-left"
                     >
                       Visit Profile
