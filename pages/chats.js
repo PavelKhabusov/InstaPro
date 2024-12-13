@@ -1,4 +1,4 @@
-import { db, useAuthSession } from "../firebase";
+import { db, onUserAuthStateChanged } from "../firebase";
 import { useEffect, useState } from "react";
 import Header from "../components/Header";
 import { UserAddIcon, UserGroupIcon, SearchIcon } from "@heroicons/react/solid";
@@ -30,26 +30,37 @@ import Image from "next/image";
 import sendPush from "../utils/sendPush";
 
 const Chats = () => {
-  const session = useAuthSession();
+  const imgLoader = ({ src }) => { return `${src}`; };
+  const [currentUser, setUser] = useState(null); // State to hold the user session
+
+  useEffect(() => {
+    const unsubscribe = onUserAuthStateChanged((user) => {
+      if (user) setUser(user); 
+      else setUser(null); 
+    });
+    return () => unsubscribe();
+  });
+
+
   const router = useRouter();
   const [validChats, setValidChats] = useState([]);
   const [validGroups, setValidGroups] = useState([]);
   const [search, setSearch] = useState("");
   const values = getAllUsers();
   const [darkMode, setDarkMode] = useRecoilState(themeState);
-  const [user] = useDocumentData(doc(db, `profile/${session?.user.username}`));
+  const [user] = useDocumentData(doc(db, `profile/${currentUser?.email.split("@")[0]}`));
   const [menu, setMenu] = useState(false);
 
   useEffect(() => {
     let unsubGroups;
     let unsubChats;
-    if (session) {
+    if (user) {
       unsubGroups = onSnapshot(
         query(collection(db, "groups"), orderBy("timeStamp", "desc")),
         (gRes) => {
           if (!gRes.empty) {
             setValidGroups(
-              getValidUsers(getArray(gRes.docs), session?.user.username)
+              getValidUsers(getArray(gRes.docs), user.login)
             );
           }
         }
@@ -59,7 +70,7 @@ const Chats = () => {
         (cRes) => {
           if (!cRes.empty) {
             setValidChats(
-              getValidUsers(getArray(cRes.docs), session?.user.username)
+              getValidUsers(getArray(cRes.docs), user.login)
             );
           }
         }
@@ -73,7 +84,7 @@ const Chats = () => {
         unsubGroups();
       }
     };
-  }, [session, router]);
+  }, [currentUser, router]);
 
   const getArray = (documents) => {
     const arr = [];
@@ -90,10 +101,10 @@ const Chats = () => {
     let valid = false;
     validChats?.map((docf) => {
       if (
-        (docf.users[0].username === session.user.username &&
-          docf.users[1].username === email) ||
-        (docf.users[1].username === session.user.username &&
-          docf.users[0].username === email)
+        (docf.users[0].login === currentUser.login &&
+          docf.users[1].login === email) ||
+        (docf.users[1].login === currentUser.login &&
+          docf.users[0].login === email)
       ) {
         if (!docf.name) {
           valid = true;
@@ -106,16 +117,16 @@ const Chats = () => {
 
   const addUser = async () => {
     setMenu(false);
-    const uName = prompt("Enter username: ")?.split(" ").join("").toLowerCase();
+    const uName = prompt("Enter displayName: ")?.split(" ").join("").toLowerCase();
     if (uName?.length > 0) {
-      if (uName !== session.user.username) {
+      if (uName !== user.login) {
         if (!chatExits(uName)) {
-          const ind = values?.findIndex((user) => user.username === uName);
+          const ind = values?.findIndex((user) => user.login === uName);
           if (ind !== -1) {
             await addDoc(collection(db, "chats"), {
               users: [
-                { username: values[ind].username },
-                { username: session?.user.username },
+                { username: values[ind].username, login: values[ind].login },
+                { username: user.username, login: user.login },
               ],
               timeStamp: serverTimestamp(),
             }).then(() => {
@@ -136,12 +147,12 @@ const Chats = () => {
   const createGroup = async () => {
     setMenu(false);
     const ref = uuidv4().split("/")[0];
-    const newUser = prompt("Enter Username: ")
+    const newUser = prompt("Enter User Login: ")
       ?.split(" ")
       .join("")
       .toLowerCase();
     if (newUser?.length > 0) {
-      const ind = values?.findIndex((user) => user.username === newUser);
+      const ind = values?.findIndex((user) => user.login === newUser);
       if (ind !== -1) {
         const name = prompt("Enter Group Name: ") || "MyGroup";
         await setDoc(doc(db, `groups/group-${ref}`), {
@@ -149,8 +160,8 @@ const Chats = () => {
           image:
             "https://www.hotelbenitsesarches.com/wp-content/uploads/community-group.jpg",
           users: [
-            { username: values[ind].username },
-            { username: session?.user.username, creator: true },
+            { username: values[ind].displayName, login: values[ind].login },
+            { username: currentUser.displayName, login: currentUser.login, creator: true },
           ],
           timeStamp: serverTimestamp(),
         }).then(() => {
@@ -183,10 +194,10 @@ const Chats = () => {
   };
 
   const redirect = (id) => {
-    router.push(`chat/${id}`);
+    router.push(`/chat/${id}`);
   };
 
-  if (!session) return <Loading />;
+  if (!user) return <Loading />;
   return (
     <div
       className={`h-screen overflow-y-scroll scrollbar-hide ${
@@ -201,20 +212,21 @@ const Chats = () => {
               <button className="flex text-lg w-full justify-center items-center p-3 mb-2 shadow-md">
                 <div className="relative w-12 h-12">
                   <Image
+                    loader={imgLoader}
                     loading="eager"
                     layout="fill"
-                    src={user?.profImg ? user.profImg : session?.user.image}
+                    src={user?.profImg ? user.profImg : user.image}
                     alt="story"
                     className="rounded-full"
                   />
                 </div>
                 <h1
                   onClick={() =>
-                    router.push(`profile/${session?.user.username}`)
+                    router.push(`/profile/${user?.login}`)
                   }
                   className="font-semibold ml-2"
                 >
-                  {user?.fullname ? user.fullname : session?.user.username}
+                  {user?.fullname ? user.fullname : user?.username}
                 </h1>
               </button>
               <button
@@ -286,7 +298,7 @@ const Chats = () => {
                 <SearchIcon className="h-4 w-4" />
                 <input
                   className="bg-transparent outline-none focus:ring-0 dark:placeholder:text-gray-300"
-                  placeholder="search username..."
+                  placeholder="search displayName..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
@@ -324,7 +336,7 @@ const Chats = () => {
                   )}
                   {validChats
                     ?.filter((curuser) =>
-                      getOtherEmail(curuser, session.user)?.includes(
+                      getOtherEmail(curuser, currentUser.email.split("@")[0])?.includes(
                         search.toLowerCase()
                       )
                     )
@@ -338,7 +350,7 @@ const Chats = () => {
                         visitor={user}
                         id={curuser.id}
                         redirect={redirect}
-                        user={getOtherEmail(curuser, session.user)}
+                        user={getOtherEmail(curuser, currentUser.email.split("@")[0])}
                       />
                     ))}
                 </>

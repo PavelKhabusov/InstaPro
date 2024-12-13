@@ -17,13 +17,14 @@ const GroupMembers = ({
   router,
   setShowMembers,
 }) => {
+  const imgLoader = ({ src }) => { return `${src}`; };
   const [menu, setMenu] = useState([]);
   const [defMenu, setDefMenu] = useState([]);
   const [admin] = useState(
-    members?.filter((member) => member.username === you)[0]?.admin || false
+    members?.filter((member) => member.displayName === you)[0]?.admin || false
   );
   const [creator] = useState(
-    members?.filter((member) => member.username === you)[0]?.creator || false
+    members?.filter((member) => member.displayName === you)[0]?.creator || false
   );
   useEffect(() => {
     const dummy = new Array(members?.length).fill(-1);
@@ -31,14 +32,14 @@ const GroupMembers = ({
     setMenu(dummy);
   }, [members?.length]);
 
-  const removeUser = async (username, status, user) => {
+  const removeUser = async (displayName, status, user) => {
     if (status && !creator) {
       alert(`You can not remove ${status} of this group`);
     } else {
       const uidRef = user.uid;
-      if (confirm(`Do you really want to remove ${username}?`)) {
+      if (confirm(`Do you really want to remove ${displayName}?`)) {
         const newMembers = await members?.filter(
-          (itruser) => itruser.username !== username
+          (itruser) => itruser.displayName !== displayName
         );
         if (newMembers?.length === 1) {
           await deleteDoc(doc(db, `groups/${id}`)).then(() => {
@@ -59,19 +60,19 @@ const GroupMembers = ({
     }
   };
 
-  const makeWhat = async (username, action) => {
-    const user = getUser(username, users);
+  const makeWhat = async (login, action) => {
+    const user = getUser(login, users);
     const newMembers = [];
     members?.forEach((itruser) => {
-      if (itruser.username === username) {
+      if (itruser.login === login) {
         if (action === "makeAdmin") {
           newMembers.push({
-            username: itruser.username,
+            username: itruser.login,
             admin: true,
           });
         } else if (action === "removeAdmin") {
           newMembers.push({
-            username: itruser.username,
+            username: itruser.login,
           });
         }
       } else {
@@ -130,13 +131,13 @@ const GroupMembers = ({
           <h6 className="text-gray-400">{members?.length}</h6>
         </div>
         {members?.map((user, index) => {
-          const curUser = getUser(user.username, users);
+          const curUser = getUser(user.login, users);
           const profImg = curUser?.profImg ? curUser.profImg : curUser?.image;
           return (
             <div
               key={index}
               onClick={() => {
-                if (user.username !== you) openMenu(index);
+                if (user.login !== you) openMenu(index);
               }}
               className={`my-2 flex items-start gap-2 p-[3px] px-3 rounded-full object-contain cursor-pointer ${
                 menu[index] === 1 ? "scale-105" : "-z-10"
@@ -144,6 +145,7 @@ const GroupMembers = ({
             >
               <div className="relative w-12 h-12">
                 <Image
+                  loader={imgLoader}
                   loading="eager"
                   layout="fill"
                   src={profImg || require("../public/userimg.jpg")}
@@ -158,7 +160,7 @@ const GroupMembers = ({
               </div>
               <div className="flex flex-col">
                 <p className="text-md font-semibold flex items-center gap-2">
-                  {curUser?.fullname || curUser?.username}
+                  {curUser?.fullname || curUser?.displayName}
                   {user?.creator ? (
                     <span className="text-xs font-semibold rounded-3xl px-2 bg-red-600">
                       creator
@@ -180,7 +182,7 @@ const GroupMembers = ({
                 <ul className="py-1 text-sm text-gray-700 dark:text-gray-200">
                   <li>
                     <button
-                      onClick={() => router.push(`profile/${user?.username}`)}
+                      onClick={() => router.push(`/profile/${user?.login}`)}
                       className="flex items-center w-full py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white text-left"
                     >
                       Visit Profile
@@ -194,7 +196,7 @@ const GroupMembers = ({
                           e.stopPropagation();
                           setMenu(defMenu);
                           removeUser(
-                            user.username,
+                            user.displayName,
                             user.admin ? "admin" : "",
                             curUser
                           );
@@ -210,7 +212,7 @@ const GroupMembers = ({
                       {!user?.admin && (
                         <li>
                           <button
-                            onClick={() => makeWhat(user.username, "makeAdmin")}
+                            onClick={() => makeWhat(user.displayName, "makeAdmin")}
                             className="flex items-center w-full py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white text-left"
                           >
                             Make Admin
@@ -221,7 +223,7 @@ const GroupMembers = ({
                         <li>
                           <button
                             onClick={() =>
-                              makeWhat(user.username, "removeAdmin")
+                              makeWhat(user.displayName, "removeAdmin")
                             }
                             className="flex items-center w-full py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white text-left"
                           >

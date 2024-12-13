@@ -1,7 +1,7 @@
 import * as PusherPushNotifications from "@pusher/push-notifications-web";
 import { toast } from "react-toastify";
 
-const initBeams = (uid, username, setBeamsInitialized, signOut) => {
+const initBeams = (uid, displayName, setBeamsInitialized, signOut) => {
   const beamsClient = new PusherPushNotifications.Client({
     instanceId: process.env.BEAMS_INSTANCE_ID,
   });
@@ -54,8 +54,8 @@ const initBeams = (uid, username, setBeamsInitialized, signOut) => {
               beamsClient.setDeviceInterests([
                 "public",
                 uid,
-                username,
-                `debug-${username}`,
+                displayName,
+                `debug-${displayName}`,
                 `debug-${uid}`,
                 "debug-public",
               ])

@@ -15,7 +15,7 @@ const FollowList = ({
   followings,
   router,
   users,
-  currUsername,
+  login,
 }) => {
   const [show, setShow] = useState([]);
   const [search, setSearch] = useState("");
@@ -63,7 +63,7 @@ const FollowList = ({
         <div className="mx-3">
           {show
             ?.filter((curruser) =>
-              curruser.username.includes(search.toLowerCase())
+              curruser.displayName.includes(search.toLowerCase())
             )
             .map((user, i) => (
               <div
@@ -73,11 +73,12 @@ const FollowList = ({
                 <div className="h-16 flex items-center w-full">
                   <div className="relative h-14 w-14">
                     <Image
+                      loader={imgLoader}
                       loading="eager"
                       alt="image"
                       src={
                         users
-                          ? getUserProfilePic(user.username, users)
+                          ? getUserProfilePic(user.login, users)
                           : randomImg
                       }
                       layout="fill"
@@ -85,7 +86,7 @@ const FollowList = ({
                     />
                     <span
                       className={`top-0 right-0 absolute  w-4 h-4 ${
-                        getUser(user.username, users)?.active
+                        getUser(user.login, users)?.active
                           ? "bg-green-400"
                           : "bg-slate-400"
                       } border-[3px] border-white dark:border-gray-900 rounded-full`}
@@ -93,13 +94,14 @@ const FollowList = ({
                   </div>
                   <div className="ml-3">
                     <button
-                      onClick={() => router.push(`profile/${user.username}`)}
+                      onClick={() => router.push(`/profile/${user.login}`)}
                       className="font-bold cursor-pointer flex items-center"
                     >
-                      {getName(getUser(user.username, users))}
-                      {user.username === "павелхабусов" && (
+                      {getName(getUser(user.login, users))}
+                      {user.login === "xabusva20" && (
                         <div className="relative h-4 w-4">
                           <Image
+                            loader={imgLoader}
                             src={require("../public/verified.png")}
                             layout="fill"
                             loading="eager"
@@ -122,9 +124,9 @@ const FollowList = ({
                     )}
                   </div>
                 </div>
-                {user.username !== currUsername && (
+                {user.login !== login && (
                   <button
-                    onClick={() => router.push(`profile/${user.username}`)}
+                    onClick={() => router.push(`/profile/${user.login}`)}
                     className="bg-slate-600 py-1 px-6 text-xs font-semibold rounded-md text-white"
                   >
                     Profile

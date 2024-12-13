@@ -1,17 +1,26 @@
 import "../styles/globals.css";
 import { RecoilRoot } from "recoil";
-import { StrictMode } from "react";
-import { useAuthSession } from "../firebase"; // Ensure correct firebase initialization
+import { StrictMode, useState, useEffect } from "react";
+import { app, onUserAuthStateChanged } from "../firebase"; // Ensure correct firebase initialization
 import { ToastContainer, Slide } from "react-toastify";
 
 function MyApp({ Component, pageProps }) {
-  const userSession = useAuthSession();
+  const [session, setUser] = useState(null); // State to hold the user session
+
+  useEffect(() => {
+    const unsubscribe = onUserAuthStateChanged((user) => {
+      if (user) setUser(user); 
+      else setUser(null); 
+    });
+    return () => unsubscribe();
+  });
+
 
   return (
     <StrictMode>
       <RecoilRoot>
         {/* Pass the user session as a prop */}
-        <Component {...pageProps} userSession={userSession} />
+        <Component {...pageProps} userSession={session} />
         <ToastContainer
           autoClose={2500}
           position={"top-left"}

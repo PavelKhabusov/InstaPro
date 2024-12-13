@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/router"; // For redirect after successful login
 
 const SignIn = () => {
+  const imgLoader = ({ src }) => { return `${src}`; };
   const [error, setError] = useState(null);
   const router = useRouter();
 
@@ -11,7 +12,7 @@ const SignIn = () => {
     <div className="h-screen flex flex-col items-center justify-center text-center">
       <div className="relative h-28 w-28">
         <Image
-          loader={ () => require("../../public/icon-512x512.png") }
+          loader={imgLoader}
           loading="eager"
           src={require("../../public/icon-512x512.png")}
           alt="InstaPro Logo"

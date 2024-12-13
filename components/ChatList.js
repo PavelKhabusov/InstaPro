@@ -26,6 +26,7 @@ const ChatList = ({
   removeGroup,
   doc,
 }) => {
+  const imgLoader = ({ src }) => { return `${src}`; };
   const [currUser, setCurrUser] = useState({});
   const [loading, setLoading] = useState(false);
   const [message, loadingMessage] = useCollectionData(
@@ -41,7 +42,7 @@ const ChatList = ({
   useEffect(() => {
     let unsub;
     if (user) {
-      unsub = onSnapshot(doc(db, `profile/${user}`), (res) => {
+      unsub = onSnapshot(doc(db, `profile/${user.login}`), (res) => {
         if (res.exists()) {
           setCurrUser(res.data());
         }
@@ -72,7 +73,7 @@ const ChatList = ({
           if (
             checkGroup
               ?.data()
-              .users?.find((user) => user.username === visitor.username)
+              .users?.find((user) => user.login === visitor.login)
               ?.creator
           ) {
             deleteAll(toastId, deletingWhat);
@@ -88,7 +89,7 @@ const ChatList = ({
 
   const removeUser = async (members, toastId) => {
     const newMembers = members?.filter(
-      (itruser) => itruser.username !== visitor.username
+      (itruser) => itruser.displayName !== visitor.displayName
     );
     if (newMembers?.length === 1) {
       await deleteDoc(doc(db, `groups/${id}`));
@@ -118,7 +119,7 @@ const ChatList = ({
         sendPush(
           currUser.uid,
           "",
-          visitor.fullname || visitor.username,
+          visitor.fullname || visitor.displayName,
           `has deleted ${group ? group : "your chat"}`,
           "",
           "https://insta-pro.vercel.app/chats"
@@ -143,12 +144,13 @@ const ChatList = ({
         <div className="flex items-center justify-center p-[1px] rounded-full cursor-pointer">
           <div className="relative w-14 h-14">
             <Image
+              loader={imgLoader}
               loading="eager"
               layout="fill"
               src={
                 group
                   ? group.image
-                  : currUser?.username
+                  : currUser?.displayName
                   ? currUser.profImg
                     ? currUser.profImg
                     : currUser.image
@@ -173,11 +175,12 @@ const ChatList = ({
                 ? group.name
                 : currUser?.fullname
                 ? currUser.fullname
-                : currUser?.username}
+                : currUser?.displayName}
             </h1>
-            {!group && currUser?.username === "павелхабусов" && (
+            {!group && currUser?.displayName === "xabusva20" && (
               <div className="relative h-4 w-4">
                 <Image
+                  loader={imgLoader}
                   src={require("../public/verified.png")}
                   layout="fill"
                   loading="eager"
@@ -189,10 +192,10 @@ const ChatList = ({
           </div>
           <div className="flex text-sm w-full justify-between items-center pr-2">
             <span className="text-gray-400 w-[70%] overflow-hidden truncate">
-              {!loadingMessage && message[0]?.username === visitor.username
+              {!loadingMessage && message[0]?.displayName === visitor.displayName
                 ? "You: "
                 : group
-                ? `${message?.length > 0 ? `${message[0]?.username}: ` : ""} `
+                ? `${message?.length > 0 ? `${message[0]?.displayName}: ` : ""} `
                 : ""}
               {!loadingMessage
                 ? message[0]?.text?.length > 0

@@ -1,13 +1,23 @@
 import { ArrowLeftIcon, SearchIcon } from "@heroicons/react/outline";
-import {useAuthSession} from "../firebase";
+import { onUserAuthStateChanged } from "../firebase";
 import Image from "next/image";
 import { useState } from "react";
 import Moment from "react-moment";
 import { getUserProfilePic, getUser, getName } from "../utils/utilityFunctions";
 
 const Likes = ({ setOpenLikes, users, likes, router }) => {
+  const imgLoader = ({ src }) => { return `${src}`; };
   const [search, setSearch] = useState("");
-  const session = useAuthSession(); 
+  const [currentUser, setUser] = useState(null); // State to hold the user session
+
+  useEffect(() => {
+    const unsubscribe = onUserAuthStateChanged((user) => {
+      if (user) setUser(user); 
+      else setUser(null); 
+    });
+    return () => unsubscribe();
+  });
+
 
   return (
     <div className="w-full md:max-w-3xl m-auto bg-gray-100 dark:text-gray-200 dark:bg-gray-900 fixed top-0 z-50 h-screen flex flex-col">
@@ -44,7 +54,7 @@ const Likes = ({ setOpenLikes, users, likes, router }) => {
 
       <section className="flex-1 overflow-y-scroll scrollbar-hide bg-white dark:bg-gray-900">
         {likes
-          ?.filter((user) => user.username.includes(search.toLowerCase()))
+          ?.filter((user) => user.displayName.includes(search.toLowerCase()))
           .map((like, i) => (
             <div
               key={i}
@@ -53,15 +63,16 @@ const Likes = ({ setOpenLikes, users, likes, router }) => {
               <div className="relative h-16 flex items-center w-full">
                 <div className="relative h-14 w-14">
                   <Image
+                    loader={imgLoader}
                     loading="eager"
                     alt="image"
-                    src={getUserProfilePic(like.username, users)}
+                    src={getUserProfilePic(like.login, users)}
                     layout="fill"
                     className="rounded-full"
                   />
                   <span
                     className={`top-0 right-0 absolute  w-4 h-4 ${
-                      getUser(like.username, users)?.active
+                      getUser(like.login, users)?.active
                         ? "bg-green-400"
                         : "bg-slate-400"
                     } border-[3px] border-white dark:border-gray-900 rounded-full`}
@@ -70,13 +81,14 @@ const Likes = ({ setOpenLikes, users, likes, router }) => {
 
                 <div className="ml-3">
                   <h1
-                    onClick={() => router.push(`profile/${like.username}`)}
+                    onClick={() => router.push(`/profile/${like.login}`)}
                     className="font-semibold mt-1 cursor-pointer flex space-x-1 items-center"
                   >
-                    {getName(getUser(like.username, users))}
-                    {like.username === "павелхабусов" && (
+                    {getName(getUser(like.login, users))}
+                    {like.login === "xabusva20" && (
                       <div className="relative h-4 w-4">
                         <Image
+                          loader={imgLoader}
                           src={require("../public/verified.png")}
                           layout="fill"
                           loading="eager"
@@ -96,9 +108,9 @@ const Likes = ({ setOpenLikes, users, likes, router }) => {
                   )}
                 </div>
               </div>
-              {like.username !== session?.user.username && (
+              {like.login !== currentUser.login && (
                 <button
-                  onClick={() => router.push(`profile/${like.username}`)}
+                  onClick={() => router.push(`/profile/${like.login}`)}
                   className="bg-gray-900 dark:bg-slate-600 dark:text-white bg-opacity-80 dark:bg-opacity-90 border-gray-400 py-1 px-6 text-xs font-semibold rounded-md"
                 >
                   Profile

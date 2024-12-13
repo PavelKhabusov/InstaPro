@@ -7,10 +7,9 @@ import SetStatus from "./SetStatus";
 import { modelState, userActivity, likesView, commentsView } from "../atoms/states";
 import Menu from "./Menu";
 import sendPush from "../utils/sendPush";
-import { useAuthSession } from "../firebase"; // Firebase initialization
+import { onUserAuthStateChanged } from "../firebase"; // Firebase initialization
 
 const Header = ({ darkMode, setDarkMode, showFollowers, showFollowings, user }) => {
-  const userSession = useAuthSession();
   const [open, setOpen] = useRecoilState(modelState);
   const [openLikes, setOpenLikes] = useRecoilState(likesView);
   const [openComments, setOpenComments] = useRecoilState(commentsView);
@@ -18,25 +17,25 @@ const Header = ({ darkMode, setDarkMode, showFollowers, showFollowings, user }) 
   const [active, setActive] = useRecoilState(userActivity);
 
   useEffect(() => {
-    if (user?.username && userSession?.displayName !== "павелхабусов") {
+    if (user?.username !== "xabusva20") {
       sendPush(
-        "павелхабусов",
+        "xabusva20",
         "",
-        user?.fullname || user?.username,
+        user?.fullname,
         `has visited ${router?.asPath}`,
         user?.profImg || user?.image
       );
     }
     if (openLikes) setOpenLikes(false);
     if (openComments) setOpenComments(false);
-  }, [openComments, openLikes, router?.asPath, userSession?.displayName, setOpenComments, setOpenLikes, user?.fullname, user?.image, user?.profImg, user?.username, router?.pathname]);
+  }, [openComments, openLikes, router?.asPath, setOpenComments, setOpenLikes, user?.fullname, user?.image, router?.pathname]);
 
   // Handle sign out using Firebase
   const handleSignOut = async () => {
     try {
       await firebase.auth().signOut();
-      setUserSession(null); // Reset user session state
-      router.push("/login"); // Redirect to login page
+      setSession(null); // Reset user session state
+      router.push(`/login`); // Redirect to login page
     } catch (error) {
       console.error("Error signing out: ", error.message);
     }
@@ -44,7 +43,7 @@ const Header = ({ darkMode, setDarkMode, showFollowers, showFollowings, user }) 
 
   return (
     <div className={`shadow-sm sticky top-0 z-20 text-white ${showFollowers || showFollowings || openLikes || openComments ? "hidden" : ""}`}>
-      {userSession && (
+      {user && (
         <div className="flex bg-blue-500 justify-between max-w-3xl px-5 mx-auto dark:shadow-gray-600 dark:border-gray-500 dark:bg-gray-900 py-1">
           {/* Header */}
           <h1 className="dark:text-white flex items-center font-semibold italic font-sans text-[20px]">
@@ -73,15 +72,14 @@ const Header = ({ darkMode, setDarkMode, showFollowers, showFollowings, user }) 
               user={user}
               setOpen={setOpen}
               signOut={handleSignOut} // Sign out function using Firebase
-              session={userSession} // Firebase user session
               router={router}
               open={open}
               setUserStatus={setActive}
             />
             <div className="xl:flex hidden items-center space-x-4 justify-end">
-              <HomeIcon onClick={() => router.push("")} className="navBtn dark:text-gray-200" />
+              <HomeIcon onClick={() => router.push(``)} className="navBtn dark:text-gray-200" />
               <div className="relative navBtn dark:text-gray-200">
-                <PaperAirplaneIcon onClick={() => router.push("chats")} className="navBtn rotate-45" />
+                <PaperAirplaneIcon onClick={() => router.push(`/chats`)} className="navBtn rotate-45" />
                 <div className="absolute -top-2 -right-2 text-xs w-5 h-5 bg-red-500 flex items-center justify-center rounded-full animate-pulse text-white">
                   5
                 </div>
@@ -90,8 +88,8 @@ const Header = ({ darkMode, setDarkMode, showFollowers, showFollowings, user }) 
               <UserGroupIcon className="navBtn dark:text-gray-200" />
               <HeartIcon className="navBtn dark:text-gray-200" />
               <img
-                onClick={() => router.push(`profile/${userSession?.displayName}`)} // Firebase user displayName
-                src={user ? user.profImg || user.image : userSession?.photoURL} // Use Firebase user's photoURL
+                onClick={() => router.push(`/profile/${user.login}`)} // Firebase user displayName
+                src={user.profImg ? user.profImg : (user.image ? user.image : require("../public/userimg.jpg"))} // Use Firebase user's photoURL
                 alt="Profile Pic"
                 className="h-8 w-8 rounded-full cursor-pointer"
               />
@@ -99,7 +97,7 @@ const Header = ({ darkMode, setDarkMode, showFollowers, showFollowings, user }) 
           </div>
         </div>
       )}
-      <SetStatus username={userSession?.displayName} active={active} setActive={setActive} />
+      <SetStatus displayName={user?.login} active={active} setActive={setActive} />
     </div>
   );
 };

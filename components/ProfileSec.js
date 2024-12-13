@@ -19,7 +19,7 @@ const ProfileSec = ({
   posts,
   showFollowers,
   showFollowings,
-  session,
+  currentUser,
   user,
   visitor,
   view,
@@ -30,6 +30,7 @@ const ProfileSec = ({
   followers,
   followings,
 }) => {
+  const imgLoader = ({ src }) => { return `${src}`; };
   const [textBio, setTextBio] = useState("");
   const [textName, setTextName] = useState("");
   const [hasFollowed, setHasFollowed] = useState(false);
@@ -59,16 +60,18 @@ const ProfileSec = ({
     }
     toastId.current = toast.loading("Following...");
     await setDoc(
-      doc(db, `profile/${user?.username}/followers/${session.user.username}`),
+      doc(db, `profile/${user?.login}/followers/${currentUser.login}`),
       {
-        username: session.user.username,
+        username: currentUser.displayName,
+        login: currentUser.login,
         timeStamp: serverTimestamp(),
       }
     );
     await setDoc(
-      doc(db, `profile/${session.user.username}/followings/${user.username}`),
+      doc(db, `profile/${currentUser.login}/followings/${user.login}`),
       {
-        username: user.username,
+        username: user.displayName,
+        login: user.login,
         timeStamp: serverTimestamp(),
       }
     ).then(() => {
@@ -80,19 +83,19 @@ const ProfileSec = ({
   };
 
   const unFollowUser = async () => {
-    if (confirm(`Do you really want to unfollow: ${user.username}`)) {
+    if (confirm(`Do you really want to unfollow: ${user.displayName}`)) {
       if (toast.isActive(toastId.current)) {
         toast.dismiss(toastId.current);
       }
       toastId.current = toast.loading("unfollowing...");
       await deleteDoc(
-        doc(db, `profile/${user.username}/followers/${session.user.username}`)
+        doc(db, `profile/${user.login}/followers/${currentUser.login}`)
       )
         .then(async () => {
           await deleteDoc(
             doc(
               db,
-              `profile/${session.user.username}/followings/${user.username}`
+              `profile/${currentUser.login}/followings/${user.login}`
             )
           ).then(() => {
             sendNotificationToUser("has unfollowed you");
@@ -123,10 +126,10 @@ const ProfileSec = ({
     sendPush(
       user.uid,
       "",
-      visitor.fullname ? visitor.fullname : visitor.username,
+      visitor.fullname ? visitor.fullname : visitor.displayName,
       message,
       visitor.profImg ? visitor.profImg : visitor.image,
-      "https://insta-pro.vercel.app/profile/" + session.user.username
+      "https://insta-pro.vercel.app/profile/" + currentUser.displayName
     );
   };
 
@@ -140,7 +143,7 @@ const ProfileSec = ({
       setLoading(true);
       const storageRef = ref(
         storage,
-        `posts/image/${session.user.username}_${uuidv4()}`
+        `posts/image/${currentUser.displayName}_${uuidv4()}`
       );
       const uploadTask = uploadBytesResumable(storageRef, profilePic);
       uploadTask.on(
@@ -157,7 +160,7 @@ const ProfileSec = ({
         () => {
           // download url
           getDownloadURL(uploadTask.snapshot.ref).then(async (url) => {
-            await updateDoc(doc(db, "profile", user.username), {
+            await updateDoc(doc(db, "profile", user.displayName), {
               bio: textBio,
               fullname: textName,
               profImg: url,
@@ -170,7 +173,7 @@ const ProfileSec = ({
     } else {
       toastId.current = toast.loading("Saving...");
       setLoading(true);
-      await updateDoc(doc(db, "profile", user.username), {
+      await updateDoc(doc(db, "profile", user.displayName), {
         bio: textBio,
         fullname: textName,
       }).then(() => {
@@ -193,15 +196,15 @@ const ProfileSec = ({
   useEffect(() => {
     setHasFollowed(
       followers?.findIndex(
-        (usern) => usern.username === session?.user.username
+        (usern) => usern.displayName === user.displayName
       ) !== -1
     );
     setFollowYou(
       followings?.findIndex(
-        (usern) => usern.username === session?.user.username
+        (usern) => usern.displayName === user.displayName
       ) !== -1
     );
-  }, [followings, followers, session]);
+  }, [followings, followers, currentUser]);
 
   const cancelEditing = () => {
     setTextBio(user.bio);
@@ -242,29 +245,14 @@ const ProfileSec = ({
               )}
             </div>
           )}
-          {user?.username === session?.user.username ? (
-            <Image
-              src={user?.profImg ? user.profImg : session.user.image}
-              layout="fill"
-              loading="eager"
-              alt="profile"
-              className="rounded-full"
-            />
-          ) : (
-            <Image
-              src={
-                user
-                  ? user.profImg
-                    ? user.profImg
-                    : user.image
-                  : require("../public/userimg.jpg")
-              }
-              layout="fill"
-              loading="eager"
-              alt="profile"
-              className="rounded-full"
-            />
-          )}
+          <Image
+            loader={imgLoader}
+            src={user?.profImg ? user.profImg : require("../public/userimg.jpg")}
+            layout="fill"
+            loading="eager"
+            alt="profile"
+            className="rounded-full"
+          />
         </div>
         <div className="absolute -top-5 right-0 flex w-64 xl:w-80 ml-10 justify-between md:max-w-2xl mt-5 px-4 text-lg">
           <button className="flex flex-col items-center">
@@ -287,8 +275,8 @@ const ProfileSec = ({
           </button>
           <div
             className={`bg-gray-100 border border-gray-700 dark:bg-black text-sm text-center w-[226px] xl:w-[290px] py-1 rounded-md absolute -bottom-10 font-semibold transition-opacity duration-300 ${
-              user?.username &&
-              session.user.username !== user.username &&
+              user?.displayName &&
+              currentUser.displayName !== user.displayName &&
               followings
                 ? "opacity-100"
                 : "opacity-0"
@@ -305,13 +293,12 @@ const ProfileSec = ({
         <div className="mt-2 flex flex-col">
           <div className="flex items-center">
             <h1 className="font-semibold text-sm">
-              {user?.username === session?.user.username
-                ? session?.user?.username
-                : user?.username}
+              {user?.displayName}
             </h1>
-            {user?.username === "павелхабусов" && (
+            {user?.displayName === "xabusva20" && (
               <div className="relative h-4 w-4">
                 <Image
+                  loader={imgLoader}
                   src={require("../public/verified.png")}
                   layout="fill"
                   loading="eager"
@@ -328,7 +315,7 @@ const ProfileSec = ({
         </div>
       )}
 
-      {user?.username === session.user.username ? (
+      {user?.displayName === currentUser.displayName ? (
         <button
           onClick={() => setEditProf(true)}
           hidden={editProf}

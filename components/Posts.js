@@ -10,7 +10,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { db, useAuthSession } from "../firebase";
+import { db, onUserAuthStateChanged, auth } from "../firebase";
 import Post from "./Post";
 import Loading from "./Loading";
 import { useRouter } from "next/router";
@@ -20,6 +20,7 @@ import { postView, likesView, commentsView } from "../atoms/states";
 import { useRecoilState } from "recoil";
 import Comments from "./Comments";
 import { getUser } from "../utils/utilityFunctions";
+import { onAuthStateChanged } from "firebase/auth";
 
 const Posts = ({
   setTotalPosts,
@@ -28,7 +29,21 @@ const Posts = ({
   showFollowers,
   showFollowings,
 }) => {
-  const session = useAuthSession();
+  const [currentUser, setUser] = useState(null); // State to hold the user session
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      if (u) setUser(u); 
+      else setUser(null);
+    })
+    // const unsubscribe = onUserAuthStateChanged((u) => {
+    //   if (u) setUser(u); 
+    //   else setUser(null); 
+    // });
+    return () => unsubscribe();
+  });
+
+
   const [posts, setPosts] = useState(undefined);
   const [postLikes, setPostLikes] = useState([]);
   const [postComments, setPostComments] = useState([]);
@@ -39,7 +54,7 @@ const Posts = ({
   const [users, loading] = useCollectionData(collection(db, "profile"));
   const [openLikes, setOpenLikes] = useRecoilState(likesView);
   const [openComments, setOpenComments] = useRecoilState(commentsView);
-  const visitor = getUser(session?.user.username, users);
+  const visitor = getUser(currentUser?.email.split("@")[0], users);
   let unsubscribe = null;
 
   useEffect(() => {
@@ -147,7 +162,7 @@ const Posts = ({
               setCurPost={setCurPost}
               setOpenLikes={setOpenLikes}
               setPostLikes={setPostLikes}
-              user={getUser(post.data().username, users)}
+              user={getUser(post.data().login, users)}
               visitor={visitor}
             />
           ))

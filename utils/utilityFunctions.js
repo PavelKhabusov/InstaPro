@@ -21,9 +21,9 @@ const getChatMessages = (id, lim = 15) => {
   }
 };
 
-const getOtherEmail = (all, currentUser) => {
+const getOtherEmail = (all, login) => {
   return all?.users?.filter(
-    (user) => user.username !== currentUser?.username
+    (user) => user.login !== login
   )[0]?.username;
 };
 
@@ -35,9 +35,9 @@ const getAllUsers = () => {
 const getValidUsers = (allUsers, currentUser) => {
   const validUsers = [];
   allUsers?.map((doc) => {
-    doc?.users?.map(({ username }) => {
+    doc?.users?.map(({ login }) => {
       if (
-        username === currentUser &&
+        login === currentUser &&
         validUsers.findIndex((e) => e.id === doc.id) === -1
       ) {
         validUsers.push(doc);
@@ -47,23 +47,23 @@ const getValidUsers = (allUsers, currentUser) => {
   return validUsers;
 };
 
-const getUserProfilePic = (username, users) => {
+const getUserProfilePic = (login, users) => {
   let profileImg;
   users?.forEach((user) => {
-    if (user.username === username) {
+    if (user.login === login) {
       profileImg = user.profImg ? user.profImg : user.image;
     }
   });
   return profileImg;
 };
 
-const getUser = (username, users) => {
-  const currUser = users?.filter((user) => user.username === username)[0];
+const getUser = (login, users) => {
+  const currUser = users?.filter((user) => user.login === login)[0];
   return currUser;
 };
 
 const getName = (user) => {
-  return user?.fullname ? user.fullname : user?.username;
+  return user?.fullname ? user.fullname : user?.displayName;
 };
 
 export {

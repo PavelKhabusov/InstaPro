@@ -1,7 +1,6 @@
 {
     "theme_color": "#58CCED",
     "background_color": "#171717",
-    "display": "export",
     "scope": "/",
     "start_url": "/social/",
     "name": "Kartoteka",

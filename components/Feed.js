@@ -4,16 +4,26 @@ import InstaStories from "./InstaStories";
 import Login from "../pages/login";
 import { useRecoilState } from "recoil";
 import { commentsView, likesView } from "../atoms/states";
-import { useAuthSession } from "../firebase";
+import { onUserAuthStateChanged } from "../firebase";
 
 const Feed = ({ setLoad, user }) => {
-  const userSession = useAuthSession();
+  const [currentUser, setUser] = useState(null); // State to hold the user session
+
+  useEffect(() => {
+    const unsubscribe = onUserAuthStateChanged((user) => {
+      if (user) setUser(user); 
+      else setUser(null); 
+    });
+    return () => unsubscribe();
+  });
+
+
   const [openLikes] = useRecoilState(likesView);
   const [openComments] = useRecoilState(commentsView);
 
   return (
     <main className="max-w-3xl mx-auto dark:bg-black scroll-smooth relative">
-      {userSession ? (
+      {currentUser ? (
         <>
           <section>
             <InstaStories

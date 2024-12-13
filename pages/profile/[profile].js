@@ -12,13 +12,23 @@ import ProfileSec from "../../components/ProfileSec";
 import FollowList from "../../components/FollowList";
 import Loading from "../../components/Loading";
 import { useEffect, useState } from "react";
-import { db, useAuthSession } from "../../firebase";
+import { db, onUserAuthStateChanged } from "../../firebase";
 import { useRouter } from "next/router";
 import { collection, query, orderBy } from "firebase/firestore";
 import { useCollectionData } from "react-firebase-hooks/firestore";
 
 const Profile = () => {
-  const session = useAuthSession();
+  const [currentUser, setUser] = useState(null); // State to hold the user session
+
+  useEffect(() => {
+    const unsubscribe = onUserAuthStateChanged((user) => {
+      if (user) setUser(user); 
+      else setUser(null); 
+    });
+    return () => unsubscribe();
+  });
+
+
   const router = useRouter();
   const [darkMode, setDarkMode] = useRecoilState(themeState);
   const [view, setView] = useRecoilState(postView);
@@ -63,7 +73,7 @@ const Profile = () => {
 
   useEffect(() => {
     let observer;
-    if (session) {
+    if (currentUser) {
       observer = new IntersectionObserver(callback, { threshold: 0.6 });
     }
     if (load && view) {
@@ -77,11 +87,11 @@ const Profile = () => {
       setOpenComments(false);
       setOpenLikes(false);
     };
-  }, [session, setOpenComments, setOpenLikes, load, view]);
+  }, [currentUser, setOpenComments, setOpenLikes, load, view]);
 
   return (
     <>
-      {session ? (
+      {currentUser ? (
         <div
           className={`relative ${
             darkMode ? "bg-gray-50" : "dark bg-gray-900"
@@ -99,7 +109,7 @@ const Profile = () => {
                   follow={true}
                   followers={followers}
                   router={router}
-                  currUsername={session?.user.username}
+                  login={currentUser.email.split("@")[0]}
                 />
                 <FollowList
                   setShowFollowings={setShowFollowings}
@@ -107,7 +117,7 @@ const Profile = () => {
                   showFollowings={showFollowings}
                   followings={followings}
                   router={router}
-                  currUsername={session?.user.username}
+                  login={currentUser.email.split("@")[0]}
                 />
                 <Header
                   showFollowers={showFollowers}
@@ -115,25 +125,25 @@ const Profile = () => {
                   darkMode={darkMode}
                   user={
                     users?.filter(
-                      (user) => user.username === session?.user.username
+                      (user) => user.login === currentUser.email.split("@")[0]
                     )[0]
                   }
                   setDarkMode={setDarkMode}
                 />
                 <ProfileSec
                   posts={totalPosts}
-                  session={session}
+                  currentUser={currentUser}
                   openLikes={openLikes}
                   setOpenLikes={setOpenLikes}
                   openComments={openComments}
                   setOpenComments={setOpenComments}
                   view={view}
                   user={
-                    users.filter((ituser) => ituser.username === profile)[0]
+                    users.filter((ituser) => ituser.login === profile)[0]
                   }
                   visitor={
                     users.filter(
-                      (ituser) => ituser.username === session?.user.username
+                      (ituser) => ituser.login === currentUser.email.split("@")[0]
                     )[0]
                   }
                   setShowFollowers={setShowFollowers}

@@ -2,7 +2,7 @@ import { doc, getDoc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { useEffect } from "react";
 import { db } from "../firebase";
 
-const SetStatus = ({ username, active, setActive }) => {
+const SetStatus = ({ login, active, setActive }) => {
   useEffect(() => {
     window.addEventListener("focus", () => setActive(true));
     window.addEventListener("blur", () => setActive(false));
@@ -18,19 +18,19 @@ const SetStatus = ({ username, active, setActive }) => {
 
   useEffect(() => {
     const setStatus = async () => {
-      getDoc(doc(db, "profile", username)).then(async (data) => {
+      getDoc(doc(db, "profile", login)).then(async (data) => {
         if (data.exists()) {
-          await updateDoc(doc(db, `profile/${username}`), {
+          await updateDoc(doc(db, `profile/${login}`), {
             active: active,
             timeStamp: serverTimestamp(),
           });
         }
       });
     };
-    if (username) {
+    if (login) {
       setStatus();
     }
-  }, [username, active]);
+  }, [login, active]);
 
   return <></>;
 };

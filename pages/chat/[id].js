@@ -1,7 +1,7 @@
 import { ArrowLeftIcon, TrashIcon } from "@heroicons/react/solid";
 import Moment from "react-moment";
 import Image from "next/image";
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import EditGroup from "../../components/EditGroup";
 import {
@@ -13,7 +13,7 @@ import {
   updateDoc,
   onSnapshot,
 } from "firebase/firestore";
-import { db, storage, useAuthSession } from "../../firebase";
+import { db, storage, onUserAuthStateChanged } from "../../firebase";
 import Loading from "../../components/Loading";
 import { ref, getDownloadURL, uploadBytesResumable } from "firebase/storage";
 import {
@@ -39,8 +39,19 @@ import SetStatus from "../../components/SetStatus";
 import useRecorder from "../../components/useRecorder";
 
 const Chat = () => {
+  const [currentUser, setSession] = useState(null); // State to hold the user session
+
+  useEffect(() => {
+    const unsubscribe = onUserAuthStateChanged((currentUser) => {
+      if (currentUser) setSession(currentUser); 
+      else setSession(null); 
+    });
+    return () => unsubscribe();
+  });
+
+
+  const imgLoader = ({ src }) => { return `${src}`; };
   const [text, setText] = useState("");
-  const session = useAuthSession();
   const router = useRouter();
   const { id } = router.query;
   const messagesEndRef = useRef(null);
@@ -57,7 +68,7 @@ const Chat = () => {
   const [showMembers, setShowMembers] = useState(false);
   const [darkMode] = useRecoilState(themeState);
   const [chat, setChat] = useState({});
-  const you = getUser(session?.user.username, users);
+  const you = getUser(currentUser?.email.split("@")[0], users);
   const [user, setUser] = useState({});
   const [active, setActive] = useRecoilState(userActivity);
   let [audioURL, isRecording, startRecording, stopRecording] = useRecorder();
@@ -74,7 +85,7 @@ const Chat = () => {
   const creator = getName(
     getUser(
       chat?.users?.filter((itr) => (itr.creator === true ? true : false))[0]
-        ?.username,
+        ?.login,
       users
     )
   );
@@ -108,10 +119,10 @@ const Chat = () => {
   }, [id, router]);
 
   useEffect(() => {
-    if (chat !== {} && !id?.includes("group")) {
-      setUser(getUser(getOtherEmail(chat, session?.user), users));
+    if (chat != {} && !id?.includes("group")) {
+      setUser(getUser(getOtherEmail(chat, currentUser.email.split("@")[0]), users));
     }
-  }, [session?.user, chat, id, users]);
+  }, [currentUser, chat, id, users]);
 
   useEffect(() => {
     if (audioURL) {
@@ -120,7 +131,8 @@ const Chat = () => {
         await addDoc(collection(db, check, id, "messages"), {
           audio: audioURL,
           type: "audio/ogg",
-          username: session.user.username,
+          login: currentUser?.email.split("@")[0],
+          username: currentUser?.displayName,
           timeStamp: serverTimestamp(),
         }).then(async () => {
           msgSend("audio");
@@ -143,7 +155,7 @@ const Chat = () => {
       setSending(true);
       const storageRef = ref(
         storage,
-        `chats/${fileType}/${you?.username}-${you?.uid}`
+        `chats/${fileType}/${you?.displayName}-${you?.uid}`
       );
       const uploadTask = uploadBytesResumable(storageRef, imgRef);
       uploadTask.on(
@@ -165,7 +177,7 @@ const Chat = () => {
             .then(async (url) => {
               await addDoc(collection(db, "chats", id, "messages"), {
                 text: msgToSend,
-                username: session.user.username,
+                username: currentUser?.displayName,
                 timeStamp: serverTimestamp(),
                 [fileType]: url,
               });
@@ -179,7 +191,8 @@ const Chat = () => {
       const check = id?.includes("group") ? "groups" : "chats";
       await addDoc(collection(db, check, id, "messages"), {
         text: msgToSend,
-        username: session.user.username,
+        login: currentUser?.email.split("@")[0],
+        username: currentUser?.displayName,
         timeStamp: serverTimestamp(),
       }).then(async () => {
         msgSend(msgToSend);
@@ -192,9 +205,9 @@ const Chat = () => {
 
   const msgSend = (msgToSend) => {
     chat?.users.forEach((itruser) => {
-      if (itruser.username !== you.username) {
+      if (itruser.login !== you.login) {
         sendPush(
-          getUser(itruser.username, users).uid,
+          getUser(itruser.login, users).uid,
           chat.name ? "" : you.fullname,
           chat.name ? you.fullname : "",
           chat.name
@@ -255,16 +268,16 @@ const Chat = () => {
 
   const addUser = async () => {
     setMenu(false);
-    const status = chat?.users?.find((user) => user.username === you.username);
+    const status = chat?.users?.find((user) => user.login === you.login);
     if (status.admin || status.creator) {
       const newUser = prompt("Enter Username: ")
         ?.split(" ")
         .join("")
         .toLowerCase();
       if (newUser?.length > 0) {
-        if (users?.findIndex((user) => user.username === newUser) !== -1) {
+        if (users?.findIndex((user) => user.login === newUser) !== -1) {
           if (
-            chat?.users?.findIndex((user) => user.username === newUser) === -1
+            chat?.users?.findIndex((user) => user.login === newUser) === -1
           ) {
             await updateDoc(doc(db, "groups", id), {
               users: [...chat.users, { username: newUser }],
@@ -307,7 +320,7 @@ const Chat = () => {
               name={chat?.name}
               members={chat?.users}
               router={router}
-              you={session?.user.username}
+              you={currentUser?.login}
               id={id}
               users={users}
               getUser={getUser}
@@ -340,13 +353,7 @@ const Chat = () => {
               <div className="flex items-center justify-center p-[1px] rounded-full object-contain mx-2">
                 <div className="relative w-12 h-12">
                   <Image
-                    loader={ () => chat?.image
-                        ? chat.image
-                        : user?.profImg
-                        ? user.profImg
-                        : user?.image
-                        ? user.image
-                        : require("../../public/userimg.jpg") }
+                    loader={imgLoader}
                     loading="eager"
                     layout="fill"
                     src={
@@ -365,7 +372,7 @@ const Chat = () => {
               </div>
               <button
                 disabled={user ? (chat?.name ? true : false) : true}
-                onClick={() => router.push(`profile/${user?.username}`)}
+                onClick={() => router.push(`/profile/${user?.login}`)}
                 className="text-left"
               >
                 <div className="flex items-center">
@@ -374,13 +381,14 @@ const Chat = () => {
                       ? chat.name
                       : user?.fullname
                       ? user.fullname
-                      : user?.username
-                      ? user.username
+                      : user?.displayName
+                      ? user.displayName
                       : "Loading..."}
                   </h1>
-                  {!chat?.name && user?.username === "павелхабусов" && (
+                  {!chat?.name && user?.login === "xabusva20" && (
                     <div className="relative h-4 w-4">
                       <Image
+                        loader={imgLoader}
                         src={require("../../public/verified.png")}
                         layout="fill"
                         loading="eager"
@@ -510,7 +518,7 @@ const Chat = () => {
 
           {/* Chat Body */}
           <section className="flex-1 flex flex-col justify-end relative pt-16 pb-2">
-            {(chat?.description || user?.bio) && (
+            {(chat?.description || currentUser?.bio) && (
               <div
                 className="absolute top-1 flex gap-2 items-center w-full bg-gray-700 border border-gray-800 text-gray-200 bg-opacity-40 px-4 py-3 rounded"
                 role="alert"
@@ -519,7 +527,7 @@ const Chat = () => {
                   {id?.includes("group") ? "Description: " : "Bio: "}
                 </strong>
                 <span className="block sm:inline truncate">
-                  {chat?.description || user?.bio}
+                  {chat?.description || currentUser?.bio}
                 </span>
               </div>
             )}
@@ -537,8 +545,8 @@ const Chat = () => {
                   ref={messagesEndRef}
                   key={i}
                   className={`flex ${
-                    messages[messages.length - 1 - i]?.data().username ===
-                    you?.username
+                    messages[messages.length - 1 - i]?.data().login ===
+                    you?.login
                       ? "justify-end"
                       : `mt-1 ${chat?.name ? "mt-5" : ""}`
                   }`}
@@ -546,8 +554,8 @@ const Chat = () => {
                   <div className="dark:text-gray-200 flex items-center rounded-md w-fit max-w-xs py-1 px-2 relative">
                     <div
                       className={`absolute top-1 rounded-full ${
-                        messages[messages.length - 1 - i]?.data().username ===
-                        you?.username
+                        messages[messages.length - 1 - i]?.data().login ===
+                        you?.login
                           ? "right-2"
                           : ""
                       }`}
@@ -556,7 +564,7 @@ const Chat = () => {
                         onClick={() =>
                           router.push(
                             `/profile/${
-                              messages[messages.length - 1 - i]?.data().username
+                              messages[messages.length - 1 - i]?.data().login
                             }`
                           )
                         }
@@ -564,10 +572,11 @@ const Chat = () => {
                       >
                         <div className="relative w-7 h-7">
                           <Image
+                            loader={imgLoader}
                             loading="eager"
                             layout="fill"
                             src={getUserProfilePic(
-                              messages[messages.length - 1 - i].data().username,
+                              messages[messages.length - 1 - i].data().login,
                               users
                             )}
                             alt="prof"
@@ -578,8 +587,8 @@ const Chat = () => {
                     </div>
                     <div
                       className={`${
-                        messages[messages.length - 1 - i]?.data().username ===
-                        you?.username
+                        messages[messages.length - 1 - i]?.data().login ===
+                        you?.login
                           ? `mr-9 ${
                               messages[messages.length - 1 - i]?.data().audio
                                 ? ""
@@ -596,6 +605,7 @@ const Chat = () => {
                       {messages[messages.length - 1 - i].data().image && (
                         <div className="my-2 shadow-md p-2">
                           <Image
+                            loader={imgLoader}
                             src={messages[messages.length - 1 - i].data().image}
                             alt="img"
                           />
@@ -651,8 +661,8 @@ const Chat = () => {
                       </div>
                     </div>
 
-                    {messages[messages.length - 1 - i]?.data().username ===
-                      you.username && (
+                    {messages[messages.length - 1 - i]?.data().login ===
+                      you.login && (
                       <TrashIcon
                         className="h-5 w-5 absolute -left-6 cursor-pointer text-gray-800 overflow-hidden dark:text-gray-200"
                         onClick={() =>
@@ -661,12 +671,12 @@ const Chat = () => {
                       />
                     )}
                     {chat?.name &&
-                      messages[messages.length - 1 - i]?.data().username !==
-                        you.username && (
+                      messages[messages.length - 1 - i]?.data().login !==
+                        you.displayName && (
                         <span className="absolute text-xs -top-3 left-11">
                           {getName(
                             getUser(
-                              messages[messages.length - 1 - i].data().username,
+                              messages[messages.length - 1 - i].data().login,
                               users
                             )
                           )}
@@ -792,7 +802,7 @@ const Chat = () => {
         </div>
       </div>
       <SetStatus
-        username={session?.user.username}
+        user={user?.login}
         active={active}
         setActive={setActive}
       />

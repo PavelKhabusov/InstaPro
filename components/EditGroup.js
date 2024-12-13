@@ -26,7 +26,7 @@ const EditGroup = ({
       setLoading(true);
       const storageRef = ref(
         storage,
-        `chats/image/${you?.username}-${you?.uid}`
+        `chats/image/${you?.displayName}-${you?.uid}`
       );
       const uploadTask = uploadBytesResumable(storageRef, selectFile);
       uploadTask.on(

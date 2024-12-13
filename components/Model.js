@@ -3,15 +3,25 @@ import { modelState, storyState, themeState } from "../atoms/states";
 import { Dialog, Transition } from "@headlessui/react";
 import { CameraIcon } from "@heroicons/react/outline";
 import { VideoCameraIcon, PhotographIcon } from "@heroicons/react/solid";
-import { Fragment, useRef, useState } from "react";
-import { db, storage, useAuthSession } from "../firebase";
+import { Fragment, useRef, useState, useEffect } from "react";
+import { db, storage, onUserAuthStateChanged } from "../firebase";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { ref, getDownloadURL, uploadBytesResumable } from "firebase/storage";
 import { uuidv4 } from "@firebase/util";
 import { toast } from "react-toastify";
 
 const Model = () => {
-  const session = useAuthSession();
+  const [currentUser, setUser] = useState(null); // State to hold the user session
+
+  useEffect(() => {
+    const unsubscribe = onUserAuthStateChanged((user) => {
+      if (user) setUser(user); 
+      else setUser(null); 
+    });
+    return () => unsubscribe();
+  });
+
+
   const [storyModel, setStoryModel] = useRecoilState(storyState);
   const [darkMode] = useRecoilState(themeState);
   const [open, setOpen] = useRecoilState(modelState);
@@ -31,7 +41,7 @@ const Model = () => {
     const storageRef = ref(
       storage,
       `${storyModel ? "stories" : "posts"}/${fileType}/${
-        session.user.username
+        currentUser.displayName
       }_${uuidv4()}`
     );
     const uploadTask = uploadBytesResumable(storageRef, selectFile);
@@ -57,9 +67,9 @@ const Model = () => {
         getDownloadURL(uploadTask.snapshot.ref).then(async (url) => {
           if (storyModel) {
             await addDoc(
-              collection(db, `profile/${session.user.username}/stories`),
+              collection(db, `profile/${currentUser.displayName}/stories`),
               {
-                username: session.user.username,
+                username: currentUser.displayName,
                 caption: caption,
                 timeStamp: serverTimestamp(),
                 [fileType]: url,
@@ -67,7 +77,7 @@ const Model = () => {
             );
           } else {
             await addDoc(collection(db, "posts"), {
-              username: session.user.username,
+              username: currentUser.displayName,
               caption: caption,
               timeStamp: serverTimestamp(),
               [fileType]: url,

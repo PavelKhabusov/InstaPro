@@ -43,6 +43,7 @@ const Post = ({
   setPostComments,
   setCurPost,
 }) => {
+  const imgLoader = ({ src }) => { return `${src}`; };
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState([]);
   const [hasLike, setHasLike] = useState(false);
@@ -74,7 +75,7 @@ const Post = ({
   useEffect(() => {
     if (likes) {
       setHasLike(
-        likes.findIndex((like) => like.username === visitor.username) !== -1
+        likes.findIndex((like) => like.login === visitor.login) !== -1
       );
     }
   }, [likes, visitor]);
@@ -85,6 +86,7 @@ const Post = ({
     } else {
       await setDoc(doc(db, "posts", post.id, "likes", visitor.uid), {
         username: visitor.username,
+        login: visitor.login,
         timeStamp: serverTimestamp(),
       }).then(() => {
         sendNotification("has liked your post");
@@ -109,7 +111,7 @@ const Post = ({
   };
 
   const sendNotification = (message) => {
-    if (user.username !== visitor.username) {
+    if (user.login !== visitor.login) {
       sendPush(
         user.uid,
         "",
@@ -163,6 +165,7 @@ const Post = ({
             <div className="flex flex-1 items-center">
               <div className="relative rounded-full h-9 w-9 mx-2">
                 <Image
+                  loader={imgLoader}
                   loading="eager"
                   layout="fill"
                   className="rounded-full"
@@ -182,7 +185,7 @@ const Post = ({
                 ></span>
               </div>
               <button
-                onClick={() => router.push(`profile/${post.data().username}`)}
+                onClick={() => router.push(`/profile/${post.data().login}`)}
                 className="font-bold dark:text-gray-200 cursor-pointer w-auto"
               >
                 {user
@@ -191,9 +194,10 @@ const Post = ({
                     : user.username
                   : post.data().username}
               </button>
-              {user?.username === "павелхабусов" && (
+              {user?.username === "xabusva20" && (
                 <div className="relative h-4 w-4">
                   <Image
+                    loader={imgLoader}
                     src={require("../public/verified.png")}
                     layout="fill"
                     loading="eager"
@@ -206,7 +210,7 @@ const Post = ({
             <Moment fromNow className="mr-2 text-[10px]">
               {post.data().timeStamp?.toDate()}
             </Moment>
-            {visitor?.username === post.data().username ? (
+            {visitor?.login === post.data().login ? (
               <div className="relative rounded-full h-6 w-6 bg-white mr-2">
                 <XCircleIcon
                   className="absolute -top-[4px] -left-1 w-8 h-8 mr-3 opacity-80 cursor-pointer text-red-600"
@@ -224,6 +228,7 @@ const Post = ({
           >
             {post.data().image && (
               <Image
+                loader={imgLoader}
                 loading="eager"
                 layout="fill"
                 objectFit="contain"
@@ -275,7 +280,7 @@ const Post = ({
               )}
             </p>
             <button
-              onClick={() => router.push(`profile/${post.data().username}`)}
+              onClick={() => router.push(`/profile/${post.data().login}`)}
               className="font-bold relative mr-1"
             >
               {user?.fullname ? user.fullname : post?.data().username}
@@ -320,6 +325,7 @@ const Post = ({
           >
             {post.data().image && (
               <Image
+                loader={imgLoader}
                 src={post.data().image}
                 layout="fill"
                 objectFit="cover"

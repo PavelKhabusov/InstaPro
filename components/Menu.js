@@ -44,9 +44,9 @@ const Menu = ({
   const signout = () => {
     setUserStatus(false);
     sendPush(
-      "павелхабусов",
+      "xabusva20",
       "",
-      user?.fullname || user?.username || session?.user?.username,
+      user?.fullname || user?.displayName,
       "has loggedout",
       user?.profImg || user?.image
     );
@@ -72,7 +72,7 @@ const Menu = ({
       </div>
       <div className=" bg-white text-black dark:bg-gray-900 dark:text-gray-100 fixed bottom-0 w-full left-0 z-40 border-t border-gray-600">
         <ul className="flex justify-between py-3 px-5">
-          <li onClick={() => router.push("")}>
+          <li onClick={() => router.push(``)}>
             {active === "/" ? (
               <HomeIcon className="h-7 w-7 btn" />
             ) : (
@@ -99,22 +99,21 @@ const Menu = ({
               <APlusCircleIcon className="h-7 w-7 btn" />
             )}
           </li>
-          <li onClick={() => router.push("chats")}>
+          <li onClick={() => router.push(`/chats`)}>
             {active.includes("Chat") ? (
               <ChatAlt2Icon className="h-7 w-7 btn" />
             ) : (
               <AChatAlt2Icon className="h-7 w-7 btn" />
             )}
           </li>
-          <li onClick={() => router.push(`profile/${session?.user.username}`)}>
+          <li onClick={() => router.push(`/profile/${user.login}`)}>
             <div className="relative h-7 w-7 rounded-full cursor-pointer btn">
               <img
                 src={
                   user
                     ? user.profImg
                       ? user.profImg
-                      : user.image
-                    : session?.user?.image
+                      : user.image : ""
                 }
                 alt="Profile Pic"
                 loading="eager"

@@ -12,7 +12,7 @@ import {
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import Moment from "react-moment";
-import { db, useAuthSession } from "../firebase";
+import { db, onUserAuthStateChanged } from "../firebase";
 import sendPush from "../utils/sendPush";
 import { getUserProfilePic, getUser, getName } from "../utils/utilityFunctions";
 
@@ -26,7 +26,19 @@ const Comments = ({
   deleteDoc,
   post,
 }) => {
-  const session = useAuthSession(); 
+  const [currentUser, setUser] = useState(null); // State to hold the user session
+
+  useEffect(() => {
+    const unsubscribe = onUserAuthStateChanged((user) => {
+      if (user) setUser(user); 
+      else setUser(null); 
+    });
+    return () => unsubscribe();
+  });
+
+  const imgLoader = ({ src }) => { return `${src}`; };
+
+
   const [subCommentRef, setSubCommentRef] = useState({});
   const [openIndex, setOpenIndex] = useState(
     new Array(comments?.length).fill(-1)
@@ -36,19 +48,20 @@ const Comments = ({
 
   const postComment = async (e) => {
     e.preventDefault();
-    if (subCommentRef?.username) {
+    if (subCommentRef?.displayName) {
       addSubComment();
     } else {
       const commentToSend = comment;
       setComment("");
       await addDoc(collection(db, `posts/${post.id}/comments`), {
         comment: commentToSend,
-        username: session.user.username,
+        username: currentUser.displayName,
+        login: currentUser?.email.split("@")[0],
         timeStamp: serverTimestamp(),
         subcomments: [],
       }).then(() => {
-        if (session.user.username !== post.data().username) {
-          sendNotification(post.data().username, "has commented to your post");
+        if (currentUser?.email.split("@")[0] !== post.data().login) {
+          sendNotification(post.data().displayName, "has commented to your post");
         }
       });
     }
@@ -66,25 +79,26 @@ const Comments = ({
         subcomments: [
           ...prevCom,
           {
-            username: session.user.username,
+            username: currentUser.displayName,
+            login: currentUser?.email.split("@")[0],
             timeStamp: time,
-            comment: `@${subCommentRef.username} ${commentToSend}`,
+            comment: `@${subCommentRef.displayName} ${commentToSend}`,
           },
         ],
       }
     ).then(() => {
       // ---------------------------------------------------------------------
-      const you = session.user.username;
-      const yourSubComment = you === subCommentRef.username ? true : false;
-      const isYourPost = post.data().username === you ? true : false;
+      const you = currentUser?.email.split("@")[0];
+      const yourSubComment = you === subCommentRef.login ? true : false;
+      const isYourPost = post.data().login === you ? true : false;
       const isYourComment =
-        subCommentRef.comment.data()?.username === you ? true : false;
+        subCommentRef.comment.data()?.login === you ? true : false;
       const ownerComment =
-        subCommentRef.comment.data()?.username === post.data().username
+        subCommentRef.comment.data()?.login === post.data().login
           ? true
           : false;
       const ownerSubComment =
-        post.data().username === subCommentRef.username ? true : false;
+        post.data().login === subCommentRef.login ? true : false;
       // ---------------------------------------------------------------------
 
       console.log("You:", you);
@@ -101,14 +115,14 @@ const Comments = ({
     sendPush(
       getUser(sendToUser, users).uid,
       "",
-      getName(getUser(session?.user.username, users)),
+      getName(getUser(currentUser?.email.split("@")[0], users)),
       message,
       ""
     );
   };
 
-  const triggerUsername = (comment, username) => {
-    setSubCommentRef({ comment: comment, username: username });
+  const triggerUsername = (comment, displayName) => {
+    setSubCommentRef({ comment: comment, username: displayName });
   };
 
   const cancelSubComment = () => {
@@ -147,7 +161,7 @@ const Comments = ({
   };
 
   useEffect(() => {
-    if (subCommentRef.username) {
+    if (subCommentRef.displayName) {
       focusElement.current.focus();
     }
   }, [focusElement, subCommentRef]);
@@ -171,15 +185,16 @@ const Comments = ({
           <div className="m-3 flex border-b-2 border-gray-700 pb-3">
             <div className="relative h-10 w-10">
               <Image
+                loader={imgLoader}
                 loading="eager"
                 alt="image"
-                src={getUserProfilePic(post.data().username, users)}
+                src={getUserProfilePic(post.data().login, users)}
                 layout="fill"
                 className="rounded-full"
               />
               <span
                 className={`absolute -top-1 right-0 w-3.5 h-3.5 ${
-                  getUser(post.data().username, users)?.active
+                  getUser(post.data().login, users)?.active
                     ? "bg-green-400"
                     : "bg-slate-400"
                 } border-[3px] border-white dark:border-gray-900 rounded-full`}
@@ -189,11 +204,11 @@ const Comments = ({
               <div className="text-md -mb-1">
                 <span
                   onClick={() =>
-                    router.push(`profile/${post.data().username}`)
+                    router.push(`/profile/${post.data().login}`)
                   }
                   className="font-bold cursor-pointer"
                 >
-                  {getName(getUser(post.data().username, users))}
+                  {getName(getUser(post.data().login, users))}
                 </span>{" "}
                 {post.data().caption}
               </div>
@@ -209,15 +224,16 @@ const Comments = ({
               <div className="absolute">
                 <div className="relative h-10 w-10">
                   <Image
+                    loader={imgLoader}
                     loading="eager"
                     alt="image"
-                    src={getUserProfilePic(comment.data().username, users)}
+                    src={getUserProfilePic(comment.data().login, users)}
                     layout="fill"
                     className="rounded-full"
                   />
                   <span
                     className={`-top-1 right-0 absolute  w-3.5 h-3.5 ${
-                      getUser(comment.data().username, users)?.active
+                      getUser(comment.data().login, users)?.active
                         ? "bg-green-400"
                         : "bg-slate-400"
                     } border-[3px] border-white dark:border-gray-900 rounded-full`}
@@ -228,11 +244,11 @@ const Comments = ({
                 <div className="text-sm">
                   <span
                     onClick={() =>
-                      router.push(`profile/${comment?.data().username}`)
+                      router.push(`/profile/${comment?.data().login}`)
                     }
                     className="font-bold cursor-pointer relative"
                   >
-                    {getName(getUser(comment?.data().username, users))}
+                    {getName(getUser(comment?.data().login, users))}
                   </span>{" "}
                   {comment.data().comment}
                 </div>
@@ -248,7 +264,7 @@ const Comments = ({
               >
                 Reply
               </button>
-              {comment.data().username === session?.user.username && (
+              {comment.data().login === currentUser?.email.split("@")[0] && (
                 <button onClick={() => deleteComment(comment.id)}>
                   Delete
                 </button>
@@ -278,15 +294,16 @@ const Comments = ({
                     <div className="absolute">
                       <div className="relative h-7 w-7">
                         <Image
+                          loader={imgLoader}
                           loading="eager"
                           alt="image"
-                          src={getUserProfilePic(subCom.username, users)}
+                          src={getUserProfilePic(subCom.login, users)}
                           layout="fill"
                           className="rounded-full"
                         />
                         <span
                           className={`-top-1 right-0 absolute  w-3.5 h-3.5 ${
-                            getUser(subCom.username, users)?.active
+                            getUser(subCom.login, users)?.active
                               ? "bg-green-400"
                               : "bg-slate-400"
                           } border-[3px] border-white dark:border-gray-900 rounded-full`}
@@ -297,11 +314,11 @@ const Comments = ({
                       <div className="text-sm">
                         <span
                           onClick={() =>
-                            router.push(`profile/${subCom.username}`)
+                            router.push(`/profile/${subCom.login}`)
                           }
                           className="font-bold cursor-pointer relative"
                         >
-                          {getName(getUser(subCom.username, users))}
+                          {getName(getUser(subCom.login, users))}
                         </span>{" "}
                         {subCom.comment}
                       </div>
@@ -315,7 +332,7 @@ const Comments = ({
                     >
                       Reply
                     </button>
-                    {subCom.username === session?.user.username && (
+                    {subCom.login === currentUser?.email.split("@")[0] && (
                       <button onClick={() => deleteSubComment(comment, index)}>
                         Delete
                       </button>
@@ -329,9 +346,9 @@ const Comments = ({
 
       {/* comments bottom */}
       <section className="py-2 px-4">
-        {subCommentRef?.username && (
+        {subCommentRef?.displayName && (
           <div className="text-sm flex justify-between text-gray-500 my-2">
-            replying to @{getName(getUser(subCommentRef.username, users))}
+            replying to @{getName(getUser(subCommentRef.login, users))}
             <button onClick={cancelSubComment}>cancel</button>
           </div>
         )}

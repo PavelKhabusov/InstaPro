@@ -4,18 +4,36 @@ import { storyState, modelState, watchStory } from "../atoms/states";
 import { useRecoilState } from "recoil";
 import { useCollectionData } from "react-firebase-hooks/firestore";
 import { collection } from "firebase/firestore";
-import { db, useAuthSession } from "../firebase";
+import { db, auth, onUserAuthStateChanged } from "../firebase";
+import { onAuthStateChanged } from "firebase/auth";
 import Image from "next/image";
 import { toast } from "react-toastify";
 
 const InstaStories = ({ user, openLikes, openComments }) => {
-  const session = useAuthSession();
+  const imgLoader = ({ src }) => { return `${src}`; };
+  // const [currentUser, setUser] = useState(""); // State to hold the user session
+  // console.log(auth);
+  // useEffect(() => {
+  //   const unsubscribe = onAuthStateChanged(auth, (u) => {
+  //     if (u) setUser(u); 
+  //     else setUser(null);
+  //   })
+  //   // const unsubscribe = onUserAuthStateChanged((u) => {
+  //   //   if (u) setUser(u); 
+  //   //   else setUser(null); 
+  //   // });
+  //   return () => unsubscribe();
+  // });
+  
+
+
   const [storyOpen, setStoryOpen] = useRecoilState(storyState);
   const [watch, setWatch] = useRecoilState(watchStory);
   const [open, setOpen] = useRecoilState(modelState);
   const [users, uLoading] = useCollectionData(collection(db, "profile"));
+  console.log(user);
   const [followings, fLoading] = useCollectionData(
-    collection(db, `profile/${session.user.username}/followings`)
+    collection(db, `profile/${user?.login}/followings`)
   );
   const [validUsers, setValidUsers] = useState([]);
 
@@ -25,7 +43,7 @@ const InstaStories = ({ user, openLikes, openComments }) => {
       users?.forEach((itruser) => {
         if (
           followings.forEach((us) => {
-            if (us.username === itruser?.username) {
+            if (us.login === itruser?.login) {
               valid.push(itruser);
             }
           })
@@ -36,7 +54,7 @@ const InstaStories = ({ user, openLikes, openComments }) => {
     if (!fLoading && !uLoading && validUsers.length === 0) {
       getValidUsers();
     }
-  }, [users, validUsers.length, followings, fLoading, uLoading, user]);
+  }, [users, validUsers.length, followings, fLoading, uLoading]);
 
   const postStories = () => {
     toast("Note: Stories are in development right now", {
@@ -66,6 +84,7 @@ const InstaStories = ({ user, openLikes, openComments }) => {
             <div className="flex items-center justify-center p-[1px] rounded-full border-red-500 border-2 object-contain cursor-pointer hover:scale-110 transition transform duration-200 ease-out">
               <div className="relative w-14 h-14">
                 <Image
+                  loader={imgLoader}
                   loading="eager"
                   layout="fill"
                   src={user.profImg ? user.profImg : user.image}
@@ -75,7 +94,7 @@ const InstaStories = ({ user, openLikes, openComments }) => {
               </div>
             </div>
             <p className="text-xs w-14 mt-1 truncate text-center dark:text-gray-300">
-              {user.fullname ? user.fullname : user.username}
+              {user.fullname ? user.fullname : user.displayName}
             </p>
           </div>
         )}
@@ -84,6 +103,7 @@ const InstaStories = ({ user, openLikes, openComments }) => {
             <div className="flex items-center justify-center p-[1px] rounded-full border-red-500 border-2 object-contain cursor-pointer hover:scale-110 transition transform duration-200 ease-out">
               <div className="relative w-14 h-14">
                 <Image
+                  loader={imgLoader}
                   loading="eager"
                   layout="fill"
                   src={curruser.profImg ? curruser.profImg : curruser.image}
@@ -93,7 +113,7 @@ const InstaStories = ({ user, openLikes, openComments }) => {
               </div>
             </div>
             <p className="text-xs w-14 mt-1 truncate text-center dark:text-gray-300">
-              {curruser.fullname ? curruser.fullname : curruser.username}
+              {curruser.fullname ? curruser.fullname : curruser.displayName}
             </p>
           </div>
         ))}

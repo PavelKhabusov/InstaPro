@@ -14,11 +14,11 @@ export default NextAuth({
   },
   callbacks: {
     async session({ session, token }) {
-      session.user.username = session.user.name
+      session.currentUser.displayName = session.currentUser.name
         .split(" ")
         .join("")
         .toLowerCase();
-      session.user.uid = token.sub;
+      session.currentUser.uid = token.sub;
       return session;
     },
   },

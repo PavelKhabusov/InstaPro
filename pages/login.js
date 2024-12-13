@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import Image from "next/image";
 
 const Login = () => {
+  const imgLoader = ({ src }) => { return `${src}`; };
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(null);
   const router = useRouter();
@@ -13,7 +14,7 @@ const Login = () => {
     const unsubscribe = onUserAuthStateChanged((firebaseUser) => {
       if (firebaseUser) {
         setUser(firebaseUser); // If logged in, set user state
-        router.push("/"); // Redirect to home
+        router.push(``); // Redirect to home
       } else {
         setUser(null); // If not logged in, reset user state
       }
@@ -55,7 +56,7 @@ const Login = () => {
     <div className="flex flex-col m-auto items-center justify-center w-full h-screen p-20 dark:bg-gray-900">
       <div className="relative h-28 w-28">
         <Image
-          loader={() => require("../public/icon-512x512.png")}
+          loader={imgLoader}
           loading="eager"
           src={require("../public/icon-512x512.png")}
           alt="instaLogo"
