@@ -782,7 +782,7 @@ const Chat = () => {
                   name={text}
                   onChange={(e) => setText(e.target.value)}
                   rows="1"
-                  className="block mx-4 p-2 w-full text-sm text-gray-900 bg-white rounded-lg border border-gray-300 focus:ring-0 bg-gray-800 border-gray-800 text-white resize-none scrollbar-none"
+                  className="block mx-4 p-2 w-full text-sm bg-[#3e3e3e] rounded-lg border border-gray-300 focus:ring-0 bg-gray-800 text-white resize-none scrollbar-none"
                   placeholder="Your message..."
                 ></textarea>
                 {text || selectFile ? (

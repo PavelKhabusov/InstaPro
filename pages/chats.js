@@ -351,11 +351,6 @@ const Chats = () => {
                   </p>
                 )}
                 {validChats
-                  ?.filter((curuser) =>
-                    getOtherEmail(curuser, user?.login)?.includes(
-                      search.toLowerCase()
-                    )
-                  )
                   .map((curuser, i) => (
                     <ChatList
                       toast={toast}
@@ -371,6 +366,11 @@ const Chats = () => {
                   ))}
               </>
             )}
+              {/* ?.filter((curuser) => 
+                    getOtherEmail(curuser, user?.login)?.includes(
+                      search.toLowerCase()
+                    )
+                  ) */}
           </div>
         </div>
       </div>

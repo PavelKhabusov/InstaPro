@@ -81,7 +81,7 @@ audio {
     gap: 10px;
     /* grid-template-columns: repeat(3, minmax(0, 1fr)); */
 }
-.grid-cols-3 > div {
+.grid-cols-3 > div:not(data-testid="puff-loading") {
     flex-basis: calc((100% - 20px) / 3);
 }
 .max-w-3xl {
@@ -182,12 +182,12 @@ video {
 }
 @media (max-width: 768px) {
     
-    .grid-cols-3 > div {
+    .grid-cols-3 > div:not(data-testid="puff-loading") {
         flex-basis: calc((100% - 20px) / 2);
     }
 }
 @media (max-width: 576px) {
-    .grid-cols-3 > div {
+    .grid-cols-3 > div:not(data-testid="puff-loading") {
         flex-basis: 100%;
     }
     .privacy {

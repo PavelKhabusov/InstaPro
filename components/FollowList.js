@@ -19,6 +19,7 @@ const FollowList = ({
 }) => {
   const [show, setShow] = useState([]);
   const [search, setSearch] = useState("");
+  const imgLoader = ({ src }) => { return `${src}`; };
 
   useEffect(() => {
     if (followers) {
@@ -63,7 +64,7 @@ const FollowList = ({
         <div className="mx-3">
           {show
             ?.filter((curruser) =>
-              curruser.displayName.includes(search.toLowerCase())
+              curruser.login.includes(search.toLowerCase())
             )
             .map((user, i) => (
               <div

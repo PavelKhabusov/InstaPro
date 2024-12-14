@@ -1,0 +1,23 @@
+RewriteEngine On
+Options +SymLinksIfOwnerMatch
+
+# Mapping of new routes within the /social/ folder
+RewriteRule ^404$ /social/404 [R=301,L]
+RewriteRule ^api/sendNotification$ /social/api/sendNotification [R=301,L]
+RewriteRule ^auth/signin$ /social/auth/signin [R=301,L]
+RewriteRule ^chat/(.*)$ /social/chat/$1 [R=301,L]
+RewriteRule ^chats$ /social/chats [R=301,L]
+RewriteRule ^login$ /social/login [R=301,L]
+RewriteRule ^profile/(.*)$ /social/profile/$1 [R=301,L]
+
+# Redirect any other non-existing file or directory requests to /social/
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-l
+RewriteRule ^(.+)$ /social/ [L,QSA]
+
+# Allow specific file types (krt, jpg, png) to be accessed
+<FilesMatch ".(krt|jpg|png)$">
+    Order Allow,Deny
+    Allow from all
+</FilesMatch>
