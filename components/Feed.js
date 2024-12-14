@@ -1,43 +1,30 @@
 import { useState, useEffect } from "react";
 import Posts from "./Posts";
-import InstaStories from "./InstaStories";
-import Login from "../pages/login";
+// import InstaStories from "./InstaStories";
 import { useRecoilState } from "recoil";
 import { commentsView, likesView } from "../atoms/states";
-import { onUserAuthStateChanged } from "../firebase";
 
-const Feed = ({ setLoad, user }) => {
-  const [currentUser, setUser] = useState(null); // State to hold the user session
-
-  useEffect(() => {
-    const unsubscribe = onUserAuthStateChanged((user) => {
-      if (user) setUser(user); 
-      else setUser(null); 
-    });
-    return () => unsubscribe();
-  });
-
-
+const Feed = ({ setLoad }) => {
   const [openLikes] = useRecoilState(likesView);
   const [openComments] = useRecoilState(commentsView);
 
   return (
-    <main className="max-w-3xl mx-auto dark:bg-black scroll-smooth relative">
-      {currentUser ? (
-        <>
+    <>
+      <div className="container mt-4">
+        <h2 className="lang" key="menuTitle">Каталог проектов</h2>
+        <main className="privacy feed scroll-smooth relative">
+          <div className="radial"></div>
           <section>
-            <InstaStories
+            {/* <InstaStories
               user={user}
               openLikes={openLikes}
               openComments={openComments}
-            />
+            /> */}
             <Posts setLoad={setLoad} />
           </section>
-        </>
-      ) : (
-        <Login />
-      )}
-    </main>
+        </main>
+      </div>
+    </>
   );
 };
 

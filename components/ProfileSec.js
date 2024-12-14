@@ -2,7 +2,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { db, storage } from "../firebase";
+import { db, storage, signOutUser } from "../firebase";
 import {
   doc,
   updateDoc,
@@ -10,10 +10,13 @@ import {
   setDoc,
   deleteDoc,
 } from "firebase/firestore";
-import { CameraIcon } from "@heroicons/react/outline";
+import { CameraIcon, LogoutIcon, MoonIcon, PencilAltIcon, SunIcon } from "@heroicons/react/outline";
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 import { uuidv4 } from "@firebase/util";
 import sendPush from "../utils/sendPush";
+import { useRecoilState } from "recoil";
+import { themeState, userActivity } from "../atoms/states";
+import { getAdminLogins } from "../utils/utilityFunctions";
 
 const ProfileSec = ({
   posts,
@@ -22,7 +25,7 @@ const ProfileSec = ({
   currentUser,
   user,
   visitor,
-  view,
+  // view,
   setShowFollowers,
   setShowFollowings,
   openLikes,
@@ -60,15 +63,15 @@ const ProfileSec = ({
     }
     toastId.current = toast.loading("Following...");
     await setDoc(
-      doc(db, `profile/${user?.login}/followers/${currentUser.login}`),
+      doc(db, `profile/${user?.login}/followers/${visitor?.login}`),
       {
-        username: currentUser.displayName,
-        login: currentUser.login,
+        username: visitor?.username,
+        login: visitor?.login,
         timeStamp: serverTimestamp(),
       }
     );
     await setDoc(
-      doc(db, `profile/${currentUser.login}/followings/${user.login}`),
+      doc(db, `profile/${visitor?.login}/followings/${user.login}`),
       {
         username: user.displayName,
         login: user.login,
@@ -89,13 +92,13 @@ const ProfileSec = ({
       }
       toastId.current = toast.loading("unfollowing...");
       await deleteDoc(
-        doc(db, `profile/${user.login}/followers/${currentUser.login}`)
+        doc(db, `profile/${user.login}/followers/${visitor?.login}`)
       )
         .then(async () => {
           await deleteDoc(
             doc(
               db,
-              `profile/${currentUser.login}/followings/${user.login}`
+              `profile/${visitor?.login}/followings/${user.login}`
             )
           ).then(() => {
             sendNotificationToUser("has unfollowed you");
@@ -126,10 +129,10 @@ const ProfileSec = ({
     sendPush(
       user.uid,
       "",
-      visitor.fullname ? visitor.fullname : visitor.displayName,
+      visitor?.fullname ? visitor?.fullname : visitor?.username,
       message,
-      visitor.profImg ? visitor.profImg : visitor.image,
-      "https://insta-pro.vercel.app/profile/" + currentUser.displayName
+      visitor?.profImg ? visitor?.profImg : visitor?.image,
+      "https://insta-pro.vercel.app/profile/" + visitor?.login
     );
   };
 
@@ -143,7 +146,7 @@ const ProfileSec = ({
       setLoading(true);
       const storageRef = ref(
         storage,
-        `posts/image/${currentUser.displayName}_${uuidv4()}`
+        `posts/image/${user.login}_${uuidv4()}`
       );
       const uploadTask = uploadBytesResumable(storageRef, profilePic);
       uploadTask.on(
@@ -160,7 +163,7 @@ const ProfileSec = ({
         () => {
           // download url
           getDownloadURL(uploadTask.snapshot.ref).then(async (url) => {
-            await updateDoc(doc(db, "profile", user.displayName), {
+            await updateDoc(doc(db, "profile", user.login), {
               bio: textBio,
               fullname: textName,
               profImg: url,
@@ -173,7 +176,7 @@ const ProfileSec = ({
     } else {
       toastId.current = toast.loading("Saving...");
       setLoading(true);
-      await updateDoc(doc(db, "profile", user.displayName), {
+      await updateDoc(doc(db, "profile", user.login), {
         bio: textBio,
         fullname: textName,
       }).then(() => {
@@ -196,15 +199,15 @@ const ProfileSec = ({
   useEffect(() => {
     setHasFollowed(
       followers?.findIndex(
-        (usern) => usern.displayName === user.displayName
+        (usern) => usern.login === user?.login
       ) !== -1
     );
     setFollowYou(
       followings?.findIndex(
-        (usern) => usern.displayName === user.displayName
+        (usern) => usern.login === user?.login
       ) !== -1
     );
-  }, [followings, followers, currentUser]);
+  }, [user?.login, followings, followers]);
 
   const cancelEditing = () => {
     setTextBio(user.bio);
@@ -213,16 +216,31 @@ const ProfileSec = ({
     setEditProf(false);
   };
 
+  const [darkMode, setDarkMode] = useRecoilState(themeState);
+
+  useEffect(() => {
+    localStorage.setItem("theme", JSON.stringify(darkMode));
+  }, [darkMode]);
+
+  const handleSignOut = async () => {
+    setLoading(true);
+    try {
+      await signOutUser(); // Sign-out the user
+    } catch (error) {
+      console.error("Error during sign-out:", error);
+      setLoading(false);
+    }
+  };
   return (
     <div
-      className={`relative w-full p-1 px-3 text-black dark:text-white ${
-        showFollowers || showFollowings || openLikes || openComments || view
+      className={`relative w-full my-4 p-1 px-3 text-black text-white ${
+        showFollowers || showFollowings || openLikes || openComments
           ? "hidden"
           : "flex"
       } flex-col`}
     >
       <div className="flex px-2 relative">
-        <div className="relative h-20 w-20 md:h-24 md:w-24">
+        <div className="relative h-20 w-20 md:h-24 md:w-24 mr-5">
           {editProf && (
             <div
               className={`w-full h-full absolute rounded-full truncate ${
@@ -247,141 +265,151 @@ const ProfileSec = ({
           )}
           <Image
             loader={imgLoader}
-            src={user?.profImg ? user.profImg : require("../public/userimg.jpg")}
+            src={user?.profImg ? user.profImg : user?.image ? user.image : require("../public/checker.png")}
             layout="fill"
             loading="eager"
             alt="profile"
-            className="rounded-full"
+            className="rounded-quad"
           />
         </div>
-        <div className="absolute -top-5 right-0 flex w-64 xl:w-80 ml-10 justify-between md:max-w-2xl mt-5 px-4 text-lg">
-          <button className="flex flex-col items-center">
-            <p className="font-bold">{posts}</p>
-            <p className="text-sm mt-1 dark:text-gray-200">Posts</p>
-          </button>
-          <button
-            onClick={() => setShowFollowers(true)}
-            className="flex flex-col items-center"
-          >
-            <p className="font-bold">{followers ? followers.length : 0}</p>
-            <p className="text-sm mt-1 dark:text-gray-200">Followers</p>
-          </button>
-          <button
-            onClick={() => setShowFollowings(true)}
-            className="flex flex-col items-center"
-          >
-            <p className="font-bold">{followings ? followings.length : 0}</p>
-            <p className="text-sm mt-1 dark:text-gray-200">Followings</p>
-          </button>
-          <div
-            className={`bg-gray-100 border border-gray-700 dark:bg-black text-sm text-center w-[226px] xl:w-[290px] py-1 rounded-md absolute -bottom-10 font-semibold transition-opacity duration-300 ${
-              user?.displayName &&
-              currentUser.displayName !== user.displayName &&
-              followings
-                ? "opacity-100"
-                : "opacity-0"
-            }`}
-          >
-            <span className={followYou ? "text-green-500" : "text-red-500"}>
-              {followYou ? "Follows You" : "Not Follows You"}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {!editProf && (
+        {!editProf && (
         <div className="mt-2 flex flex-col">
           <div className="flex items-center">
             <h1 className="font-semibold text-sm">
-              {user?.displayName}
+              {user?.login}
             </h1>
-            {user?.displayName === "xabusva20" && (
-              <div className="relative h-4 w-4">
+            {getAdminLogins().includes(user?.login) && (
+              <div className="relative h-4 w-4 mx-2">
                 <Image
+                  unoptimized
                   loader={imgLoader}
-                  src={require("../public/verified.png")}
+                  src={require("../public/emoji.gif")}
                   layout="fill"
                   loading="eager"
                   alt="profile"
-                  className="rounded-full"
+                  className="verified"
                 />
               </div>
             )}
           </div>
           <h1 className="font-semibold text-lg">
-            <span className="dark:text-gray-400">~</span> {user?.fullname}
+            <span className="text-gray-400">~</span> {user?.fullname}
           </h1>
-          <p className="text-sm dark:text-gray-200">{user?.bio}</p>
+          <p className="text-sm text-gray-200">{user?.bio}</p>
         </div>
       )}
 
-      {user?.displayName === currentUser.displayName ? (
-        <button
-          onClick={() => setEditProf(true)}
-          hidden={editProf}
-          className="w-full max-w-xl mx-auto mt-8 py-1 dark:bg-gray-700 border border-gray-700 rounded-md dark:hover:bg-gray-600 bg-blue-500 text-white font-semibold shadow-sm"
-        >
-          Edit Profile
-        </button>
-      ) : (
-        <button
-          onClick={!hasFollowed ? followUser : unFollowUser}
-          className="w-full max-w-xl mx-auto mt-8 py-1 dark:bg-gray-700 border border-gray-700 rounded-md dark:hover:bg-gray-600 bg-blue-500 text-white font-semibold shadow-sm"
-        >
-          {hasFollowed ? "Unfollow" : "Follow"}
-        </button>
+      {user?.login === visitor?.login && (
+        <PencilAltIcon hidden={editProf} onClick={() => setEditProf(true)} className="btn"/>
       )}
 
-      {editProf && (
-        <div className="mt-5 w-full md:max-w-6xl relative">
-          <input
-            hidden
-            type="file"
-            typeof="image"
-            alt="profile"
-            ref={profileImageRef}
-            onChange={(e) => addMedia(e.target.files[0])}
-            required
-          />
-          <p className="text-xs ml-3">Name</p>
-          <input
-            className="bg-transparent border-none focus:ring-0 w-full"
-            type="text"
-            placeholder="Enter name"
-            value={textName}
-            onChange={(e) => setTextName(e.target.value)}
-          />
-          <div className="border-b-2 ml-3 mr-3"></div>
-          <p className="mt-5 text-xs ml-3">Bio</p>
-          <input
-            className="bg-transparent border-none focus:ring-0 w-full"
-            type="text"
-            placeholder="Enter bio"
-            value={textBio}
-            onChange={(e) => setTextBio(e.target.value)}
-          />
-          <div className="border-b-2 ml-3 mr-3"></div>
-          <div className="relative h-10">
-            <div className="flex space-x-4 absolute bottom-1 right-3 text-white text-sm font-semibold">
-              <button
-                disabled={loading}
-                onClick={saveEditing}
-                className="bg-blue-500 w-20 h-7 rounded-lg"
-              >
-                Save
-              </button>
-              <button
-                disabled={loading}
-                onClick={cancelEditing}
-                className="bg-gray-500 w-20 h-7 rounded-lg"
-              >
-                Cancel
-              </button>
+        {editProf && (
+          <div className="mt-5 w-full md:max-w-6xl relative">
+            <input
+              hidden
+              type="file"
+              typeof="image"
+              alt="profile"
+              ref={profileImageRef}
+              onChange={(e) => addMedia(e.target.files[0])}
+              required
+            />
+            <p className="text-xs ml-3">Name</p>
+            <input
+              className="bg-transparent border-none focus:ring-0 w-full"
+              type="text"
+              placeholder="Enter name"
+              value={textName}
+              onChange={(e) => setTextName(e.target.value)}
+            />
+            <div className="border-b-2 ml-3 mr-3"></div>
+            <p className="mt-5 text-xs ml-3">Bio</p>
+            <input
+              className="bg-transparent border-none focus:ring-0 w-full"
+              type="text"
+              placeholder="Enter bio"
+              value={textBio}
+              onChange={(e) => setTextBio(e.target.value)}
+            />
+            <div className="border-b-2 ml-3 mr-3"></div>
+            <div className="relative h-10">
+              <div className="flex space-x-4 absolute bottom-1 right-3 text-white text-sm font-semibold">
+                <button
+                  disabled={loading}
+                  onClick={saveEditing}
+                  className="bg-blue-500 w-20 h-7 rounded-lg"
+                >
+                  Save
+                </button>
+                <button
+                  disabled={loading}
+                  onClick={cancelEditing}
+                  className="bg-gray-500 w-20 h-7 rounded-lg"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
+        )}
+      </div>
+      <div className="absolute flex flex-col justify-center items-end gap-3 -top-5 right-0 flex w-64 xl:w-80 ml-10 justify-between md:max-w-2xl mt-10 px-4 text-lg">
+          <div className="flex gap-5">
+            <button className="flex flex-col items-center">
+              <p className="font-bold">{posts}</p>
+              <p className="text-sm mt-1 text-gray-200">Posts</p>
+            </button>
+            <button
+              onClick={() => setShowFollowers(true)}
+              className="flex flex-col items-center"
+            >
+              <p className="font-bold">{followers ? followers.length : 0}</p>
+              <p className="text-sm mt-1 text-gray-200">Followers</p>
+            </button>
+            <button
+              onClick={() => setShowFollowings(true)}
+              className="flex flex-col items-center"
+            >
+              <p className="font-bold">{followings ? followings.length : 0}</p>
+              <p className="text-sm mt-1 text-gray-200">Followings</p>
+            </button>
+          
+            {/* <div onClick={() => setDarkMode(!darkMode)}>
+              {darkMode ? (
+                <MoonIcon className="h-8 w-8 my-2 btn" />
+              ) : (
+                <SunIcon className="h-8 w-8 my-2 btn" />
+              )}
+            </div> */}
+            {visitor?.login === user?.login && (
+              <LogoutIcon onClick={handleSignOut} className="h-8 w-8 my-2 btn" />
+            )}
+          </div>
+          <div className="flex gap-2">
+            <div
+              className={`bg-[#3e3e3e] px-3 text-sm text-center py-1 rounded-md font-semibold transition-opacity duration-300 ${
+                user?.login &&
+                visitor?.login !== user?.login &&
+                followings
+                  ? "opacity-100"
+                  : "opacity-0"
+              }`}
+            >
+              <span className={followYou ? "text-green-500" : "text-red-500"}>
+                {followYou ? "Follows You" : "Not Follows You"}
+              </span>
+            </div>
+            {user?.login !== visitor?.login && (
+              <button
+                onClick={!hasFollowed ? followUser : unFollowUser}
+                className="px-3 py-1 bg-[#171717] rounded-md hover:bg-[#3e3e3e] text-sm text-white font-semibold shadow-sm"
+              >
+                {hasFollowed ? "Unfollow" : "Follow"}
+              </button>
+            )}
+          </div>
         </div>
-      )}
-    </div>
+      </div>
   );
 };
 

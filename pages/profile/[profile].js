@@ -4,6 +4,7 @@ import {
   postView,
   likesView,
   commentsView,
+  userActivity
 } from "../../atoms/states";
 import Login from "../../pages/login";
 import Header from "../../components/Header";
@@ -31,13 +32,16 @@ const Profile = () => {
 
   const router = useRouter();
   const [darkMode, setDarkMode] = useRecoilState(themeState);
-  const [view, setView] = useRecoilState(postView);
+  // const [view, setView] = useRecoilState(postView);
   const [openLikes, setOpenLikes] = useRecoilState(likesView);
   const [openComments, setOpenComments] = useRecoilState(commentsView);
   const [totalPosts, setTotalPosts] = useState(0);
+  const [bookmarksPosts, setBookmarksPosts] = useState(0);
   const [showFollowers, setShowFollowers] = useState(false);
   const [showFollowings, setShowFollowings] = useState(false);
+  const [showBookmarks, setShowBookmarks] = useState(false);
   const { profile } = router?.query;
+
   const [load, setLoad] = useState(false);
   const [users, loading] = useCollectionData(collection(db, "profile"));
 
@@ -54,6 +58,10 @@ const Profile = () => {
     )
   );
 
+  const [bookmarks] = useCollectionData(
+    query(collection(db, `profile/${profile}/bookmarks`), orderBy("timeStamp", "desc"))
+  );
+
   useEffect(() => {
     return () => {
       setShowFollowings(false);
@@ -61,43 +69,48 @@ const Profile = () => {
     };
   }, [followings]);
 
+  // useEffect(() => {
+  //   return () => {
+  //     setShowBookmarks(false);
+  //   };
+  // }, [bookmarks]);
+  
+
   const callback = (entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        entry.target.play();
-      } else {
-        entry.target.pause();
-      }
-    });
+    // entries.forEach((entry) => {
+    //   if (entry.isIntersecting) {
+    //     entry.target.play();
+    //   } else {
+    //     entry.target.pause();
+    //   }
+    // });
   };
 
   useEffect(() => {
-    let observer;
-    if (currentUser) {
-      observer = new IntersectionObserver(callback, { threshold: 0.6 });
-    }
-    if (load && view) {
-      const elements = document.querySelectorAll("video");
-      elements.forEach((element) => {
-        observer.observe(element);
-      });
-    }
+    // let observer;
+    // if (currentUser) {
+    //   observer = new IntersectionObserver(callback, { threshold: 0.6 });
+    // }
+    // if (load) {
+    //   const elements = document.querySelectorAll("video");
+    //   elements.forEach((element) => {
+    //     observer.observe(element);
+    //   });
+    // }
     return () => {
-      observer?.disconnect();
+      // observer?.disconnect();
       setOpenComments(false);
       setOpenLikes(false);
     };
-  }, [currentUser, setOpenComments, setOpenLikes, load, view]);
+  }, [currentUser, setOpenComments, setOpenLikes, load]);
 
   return (
     <>
-      {currentUser ? (
+      {currentUser || profile ? (
         <div
-          className={`relative ${
-            darkMode ? "bg-gray-50" : "dark bg-gray-900"
-          } h-screen overflow-y-scroll scrollbar-hide flex justify-center relative`}
+          className={`relative h-screen overflow-y-scroll scrollbar-hide flex justify-center relative`}
         >
-          <div className="max-w-3xl min-w-[380px] dark:text-gray-200 flex-1 overflow-y-scroll scrollbar-hide">
+          <div className="max-w-3xl min-w-[380px] text-gray-200 flex-1 overflow-y-scroll scrollbar-hide">
             {loading ? (
               <Loading page={"profile"} />
             ) : (
@@ -109,7 +122,7 @@ const Profile = () => {
                   follow={true}
                   followers={followers}
                   router={router}
-                  login={currentUser.email.split("@")[0]}
+                  login={currentUser?.email.split("@")[0]}
                 />
                 <FollowList
                   setShowFollowings={setShowFollowings}
@@ -117,7 +130,7 @@ const Profile = () => {
                   showFollowings={showFollowings}
                   followings={followings}
                   router={router}
-                  login={currentUser.email.split("@")[0]}
+                  login={currentUser?.email.split("@")[0]}
                 />
                 <Header
                   showFollowers={showFollowers}
@@ -125,7 +138,7 @@ const Profile = () => {
                   darkMode={darkMode}
                   user={
                     users?.filter(
-                      (user) => user.login === currentUser.email.split("@")[0]
+                      (user) => user.login === currentUser?.email.split("@")[0]
                     )[0]
                   }
                   setDarkMode={setDarkMode}
@@ -137,13 +150,13 @@ const Profile = () => {
                   setOpenLikes={setOpenLikes}
                   openComments={openComments}
                   setOpenComments={setOpenComments}
-                  view={view}
+                  // view={view}
                   user={
-                    users.filter((ituser) => ituser.login === profile)[0]
+                    users.filter((ituser) => ituser.login == profile)[0]
                   }
                   visitor={
                     users.filter(
-                      (ituser) => ituser.login === currentUser.email.split("@")[0]
+                      (ituser) => ituser.login === currentUser?.email.split("@")[0]
                     )[0]
                   }
                   setShowFollowers={setShowFollowers}
@@ -153,17 +166,17 @@ const Profile = () => {
                   followers={followers}
                   followings={followings}
                 />
-                <button
+                {/* <button
                   hidden={
                     showFollowers || showFollowings || openLikes || openComments
                       ? true
                       : false
                   }
-                  className="absolute z-50 bottom-20 text-white dark:text-gray-300 bg-blue-400 font-semibold dark:bg-slate-700 rounded-r-2xl py-1 px-4"
+                  className="absolute z-50 bottom-20 text-white text-gray-300 bg-blue-400 font-semibold bg-slate-700 rounded-r-2xl py-1 px-4"
                   onClick={() => setView(!view)}
                 >
                   {view ? "G-View" : "P-View"}
-                </button>
+                </button> */}
               </>
             )}
             <div className={loading ? "hidden" : ""}>
@@ -174,6 +187,8 @@ const Profile = () => {
                 setTotalPosts={setTotalPosts}
                 profile={profile}
               />
+              
+                <Posts setTotalPosts={setBookmarksPosts} profile={profile} setLoad={setLoad} bookmarks={bookmarks} />
             </div>
           </div>
         </div>

@@ -12,6 +12,7 @@ const SignIn = () => {
     <div className="h-screen flex flex-col items-center justify-center text-center">
       <div className="relative h-28 w-28">
         <Image
+          unoptimized
           loader={imgLoader}
           loading="eager"
           src={require("../../public/icon-512x512.png")}
@@ -28,6 +29,7 @@ const SignIn = () => {
           className="p-3 bg-blue-500 text-white rounded-lg hover:bg-gray-100 font-semibold hover:text-blue-500 shadow-lg border mb-4"
           onClick={signInWithGoogle}
         >
+        <img className="firebaseui-idp-icon" alt="" src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"></img>
           Sign in with Google
         </button>
         {/* Apple Sign-In Button */}
@@ -35,6 +37,7 @@ const SignIn = () => {
           className="p-3 bg-black text-white rounded-lg hover:bg-gray-100 font-semibold hover:text-black shadow-lg border"
           onClick={signInWithApple}
         >
+        <img className="firebaseui-idp-icon" alt="" src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/apple.png"></img>
           Sign in with Apple
         </button>
       </div>

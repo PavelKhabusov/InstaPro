@@ -85,7 +85,7 @@ const EditGroup = ({
     <>
       <div className="absolute inset-0 h-screen bg-gray-700 bg-opacity-50 z-30"></div>
       <div className="absolute z-40 h-screen inset-0 flex items-center justify-center">
-        <div className="inline-block align-bottom bg-white dark:bg-gray-900 rounded-xl px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl sm:my-8 sm:align-middle w-full max-w-sm sm:p-6 dark:text-gray-200">
+        <div className="inline-block align-bottom bg-white bg-gray-900 rounded-xl px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl sm:my-8 sm:align-middle w-full max-w-sm sm:p-6 text-gray-200">
           <div>
             {selectFile ? (
               <button
@@ -97,10 +97,10 @@ const EditGroup = ({
                 <p> ~{selectFile.name}</p>
               </button>
             ) : (
-              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-gray-500 cursor-pointer">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 bg-gray-500 cursor-pointer">
                 <CameraIcon
                   onClick={() => filePickerRef.current.click()}
-                  className="h-6 w-6 text-red-600 dark:text-gray-200"
+                  className="h-6 w-6 text-red-600 text-gray-200"
                   aria-hidden="true"
                 />
               </div>
@@ -118,14 +118,14 @@ const EditGroup = ({
               <input
                 disabled={loading}
                 onChange={(e) => setName(e.target.value)}
-                className="mt-4 p-2 w-full text-sm text-gray-900 bg-white rounded-lg border border-gray-300 focus:ring-0 dark:bg-gray-700 dark:border-gray-800 dark:text-white resize-none scrollbar-none dark:placeholder:text-gray-300"
+                className="mt-4 p-2 w-full text-sm text-gray-900 bg-white rounded-lg border border-gray-300 focus:ring-0 bg-gray-700 border-gray-800 text-white resize-none scrollbar-none placeholder:text-gray-300"
                 type="text"
                 placeholder="Name..."
               />
               <textarea
                 disabled={loading}
                 onChange={(e) => setDescription(e.target.value)}
-                className="block mt-4 p-2 w-full text-sm text-gray-900 bg-white rounded-lg border border-gray-300 focus:ring-0 dark:bg-gray-700 dark:border-gray-800 dark:text-white resize-none scrollbar-none dark:placeholder:text-gray-300"
+                className="block mt-4 p-2 w-full text-sm text-gray-900 bg-white rounded-lg border border-gray-300 focus:ring-0 bg-gray-700 border-gray-800 text-white resize-none scrollbar-none placeholder:text-gray-300"
                 type="text"
                 placeholder="group description..."
               />
@@ -136,7 +136,7 @@ const EditGroup = ({
             <button
               type="button"
               disabled={loading}
-              className="inline-flex justify-center w-full rounded-lg border border-transparent shadow-sm px-4 py-2 bg-red-200 dark:bg-gray-600"
+              className="inline-flex justify-center w-full rounded-lg border border-transparent shadow-sm px-4 py-2 bg-red-200 bg-gray-600"
               onClick={saveEditing}
             >
               Save

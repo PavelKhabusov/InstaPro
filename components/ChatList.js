@@ -13,6 +13,7 @@ import { db } from "../firebase";
 import sendPush from "../utils/sendPush";
 import { useCollectionData } from "react-firebase-hooks/firestore";
 import { useEffect, useState } from "react";
+import { getAdminLogins } from "../utils/utilityFunctions";
 
 const ChatList = ({
   redirect,
@@ -73,7 +74,7 @@ const ChatList = ({
           if (
             checkGroup
               ?.data()
-              .users?.find((user) => user.login === visitor.login)
+              .users?.find((user) => user.login === visitor?.login)
               ?.creator
           ) {
             deleteAll(toastId, deletingWhat);
@@ -89,7 +90,7 @@ const ChatList = ({
 
   const removeUser = async (members, toastId) => {
     const newMembers = members?.filter(
-      (itruser) => itruser.displayName !== visitor.displayName
+      (itruser) => itruser.login !== visitor?.login
     );
     if (newMembers?.length === 1) {
       await deleteDoc(doc(db, `groups/${id}`));
@@ -119,7 +120,7 @@ const ChatList = ({
         sendPush(
           currUser.uid,
           "",
-          visitor.fullname || visitor.displayName,
+          visitor?.fullname || visitor?.displayName,
           `has deleted ${group ? group : "your chat"}`,
           "",
           "https://insta-pro.vercel.app/chats"
@@ -132,7 +133,7 @@ const ChatList = ({
     <div className="relative mx-3 my-1">
       <button
         disabled={loading}
-        className="absolute right-2 cursor-pointer bg-red-600 text-gray-200 text-sm font-semibold mt-2 px-2 py-[1.5px] rounded-lg shadow-sm dark:bg-opacity-90"
+        className="absolute right-2 cursor-pointer bg-red-600 text-gray-200 text-sm font-semibold mt-2 px-2 py-[1.5px] rounded-lg shadow-sm bg-opacity-90"
         onClick={deleteChat}
       >
         delete
@@ -144,17 +145,18 @@ const ChatList = ({
         <div className="flex items-center justify-center p-[1px] rounded-full cursor-pointer">
           <div className="relative w-14 h-14">
             <Image
+              unoptimized
               loader={imgLoader}
               loading="eager"
               layout="fill"
               src={
                 group
                   ? group.image
-                  : currUser?.displayName
-                  ? currUser.profImg
+                  : currUser?.profImg
                     ? currUser.profImg
-                    : currUser.image
-                  : require("../public/userimg.jpg")
+                    : currUser?.image 
+                      ? currUser.image
+                      : require("../public/checker.png")
               }
               alt="story"
               className="rounded-full"
@@ -163,7 +165,7 @@ const ChatList = ({
               <span
                 className={`top-0 right-0 absolute w-4 h-4 ${
                   currUser?.active ? "bg-green-400" : "bg-slate-400"
-                } border-[3px] border-white dark:border-gray-900 rounded-full`}
+                } border-[3px] border-gray-900 rounded-full`}
               ></span>
             )}
           </div>
@@ -175,37 +177,38 @@ const ChatList = ({
                 ? group.name
                 : currUser?.fullname
                 ? currUser.fullname
-                : currUser?.displayName}
+                : currUser?.username}
             </h1>
-            {!group && currUser?.displayName === "xabusva20" && (
-              <div className="relative h-4 w-4">
+            {!group && getAdminLogins()?.includes(currUser?.login) && (
+              <div className="relative h-4 w-4 mx-2">
                 <Image
+                  unoptimized
                   loader={imgLoader}
-                  src={require("../public/verified.png")}
+                  src={require("../public/emoji.gif")}
                   layout="fill"
                   loading="eager"
                   alt="profile"
-                  className="rounded-full"
+                  className="verified"
                 />
               </div>
             )}
           </div>
           <div className="flex text-sm w-full justify-between items-center pr-2">
             <span className="text-gray-400 w-[70%] overflow-hidden truncate">
-              {!loadingMessage && message[0]?.displayName === visitor.displayName
+              {!loadingMessage && message[0]?.login === visitor?.login
                 ? "You: "
                 : group
-                ? `${message?.length > 0 ? `${message[0]?.displayName}: ` : ""} `
+                ? `${message?.length > 0 ? `${message[0]?.login}: ` : ""} `
                 : ""}
               {!loadingMessage
                 ? message[0]?.text?.length > 0
                   ? message[0].text
                   : message[0]?.image
-                  ? "image/"
+                  ? "Image"
                   : message[0]?.video
-                  ? "video/"
+                  ? "Video"
                   : message[0]?.audio
-                  ? "audio/"
+                  ? "Audio"
                   : "tap to send text"
                 : "loading.."}
             </span>

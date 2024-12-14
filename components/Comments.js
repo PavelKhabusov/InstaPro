@@ -15,6 +15,7 @@ import Moment from "react-moment";
 import { db, onUserAuthStateChanged } from "../firebase";
 import sendPush from "../utils/sendPush";
 import { getUserProfilePic, getUser, getName } from "../utils/utilityFunctions";
+import EmojiPicker from 'emoji-picker-react';
 
 const Comments = ({
   users,
@@ -55,7 +56,7 @@ const Comments = ({
       setComment("");
       await addDoc(collection(db, `posts/${post.id}/comments`), {
         comment: commentToSend,
-        username: currentUser.displayName,
+        username: currentUser?.displayName,
         login: currentUser?.email.split("@")[0],
         timeStamp: serverTimestamp(),
         subcomments: [],
@@ -122,6 +123,8 @@ const Comments = ({
   };
 
   const triggerUsername = (comment, displayName) => {
+    console.log(comment);
+    console.log(displayName);
     setSubCommentRef({ comment: comment, username: displayName });
   };
 
@@ -166,11 +169,20 @@ const Comments = ({
     }
   }, [focusElement, subCommentRef]);
 
+  const [openEmoji, setEmoji] = useState(false);
+  const handleOpenEmoji = () => {
+    setEmoji(!openEmoji)
+  }
+  const addEmoji = (emoji) => {
+    setComment(comment + emoji.emoji)
+  }
+
+
   return (
-    <div className="fixed top-0 z-50 bg-white dark:bg-gray-900 w-full md:max-w-3xl m-auto dark:text-gray-200 flex flex-col h-screen">
+    <div className="fixed top-0 z-50 bg-white bg-gray-900 w-full md:max-w-3xl m-auto text-gray-200 flex flex-col h-screen">
       {/* comments header */}
       <section className="w-full md:max-w-3xl">
-        <div className="flex space-x-3 px-3 items-center bg-blue-500 dark:bg-gray-900 text-white h-16">
+        <div className="flex space-x-3 px-3 items-center bg-blue-500 bg-gray-900 text-white h-16">
           <ArrowLeftIcon
             className="h-6 w-6 cursor-pointer"
             onClick={() => setOpenComments(false)}
@@ -185,6 +197,7 @@ const Comments = ({
           <div className="m-3 flex border-b-2 border-gray-700 pb-3">
             <div className="relative h-10 w-10">
               <Image
+                unoptimized
                 loader={imgLoader}
                 loading="eager"
                 alt="image"
@@ -197,7 +210,7 @@ const Comments = ({
                   getUser(post.data().login, users)?.active
                     ? "bg-green-400"
                     : "bg-slate-400"
-                } border-[3px] border-white dark:border-gray-900 rounded-full`}
+                } border-[3px] border-gray-900 rounded-full`}
               ></span>
             </div>
             <div className="flex-1 mx-3">
@@ -219,11 +232,12 @@ const Comments = ({
           </div>
         )}
         {comments?.map((comment, i) => (
-          <div key={i} className="mb-2 mx-3 pb-3 border-b dark:border-gray-800">
+          <div key={i} className="mb-2 mx-3 pb-3 border-b border-gray-800">
             <div className="relative w-full flex">
               <div className="absolute">
                 <div className="relative h-10 w-10">
                   <Image
+                    unoptimized
                     loader={imgLoader}
                     loading="eager"
                     alt="image"
@@ -236,7 +250,7 @@ const Comments = ({
                       getUser(comment.data().login, users)?.active
                         ? "bg-green-400"
                         : "bg-slate-400"
-                    } border-[3px] border-white dark:border-gray-900 rounded-full`}
+                    } border-[3px] border-gray-900 rounded-full`}
                   ></span>
                 </div>
               </div>
@@ -294,6 +308,7 @@ const Comments = ({
                     <div className="absolute">
                       <div className="relative h-7 w-7">
                         <Image
+                          unoptimized
                           loader={imgLoader}
                           loading="eager"
                           alt="image"
@@ -306,7 +321,7 @@ const Comments = ({
                             getUser(subCom.login, users)?.active
                               ? "bg-green-400"
                               : "bg-slate-400"
-                          } border-[3px] border-white dark:border-gray-900 rounded-full`}
+                          } border-[3px] border-gray-900 rounded-full`}
                         ></span>
                       </div>
                     </div>
@@ -352,13 +367,23 @@ const Comments = ({
             <button onClick={cancelSubComment}>cancel</button>
           </div>
         )}
-        <form className="flex items-center sticky bottom-0 z-50 bg-white dark:bg-gray-900 w-full md:max-w-3xl">
-          <EmojiHappyIcon className="h-7 dark:text-gray-200" />
+        <form className="flex items-center sticky bottom-0 z-50 bg-white bg-gray-900 w-full md:max-w-3xl">
+          <EmojiHappyIcon onClick={handleOpenEmoji} className="h-7 text-gray-200" />
+            {openEmoji && (
+              <div className="absolute" style={{bottom: "calc(100% - 5px)", left: "50%", transform: "translateX(-50%)"}}>
+                <EmojiPicker
+                  reactionsDefaultOpen={true} 
+                  skinTonesDisabled={true}
+                  theme="dark"
+                  onReactionClick={addEmoji}
+                />
+              </div>
+            )}
           <input
             value={comment}
             ref={focusElement}
             onChange={(e) => setComment(e.target.value)}
-            className="border-none flex-1 outline-none focus:ring-0 dark:bg-transparent dark:placeholder:text-gray-400 dark:text-white"
+            className="border-none flex-1 outline-none focus:ring-0 bg-transparent placeholder:text-gray-400 text-white"
             placeholder="add a comment..."
             type="text"
           />

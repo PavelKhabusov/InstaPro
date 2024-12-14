@@ -23,6 +23,8 @@ import {
   getName,
   getOtherEmail,
   getUserProfilePic,
+  Modal,
+  getAdminLogins,
 } from "../../utils/utilityFunctions";
 import { useRecoilState } from "recoil";
 import { themeState, userActivity } from "../../atoms/states";
@@ -39,6 +41,13 @@ import SetStatus from "../../components/SetStatus";
 import useRecorder from "../../components/useRecorder";
 
 const Chat = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [modalSrc, setModalSrc] = useState("");
+  const showModal = (e, src) => {
+    console.log(e, src);
+    setModalSrc(src);
+    setIsOpen(true);
+  };
   const [currentUser, setSession] = useState(null); // State to hold the user session
 
   useEffect(() => {
@@ -73,6 +82,8 @@ const Chat = () => {
   const [active, setActive] = useRecoilState(userActivity);
   let [audioURL, isRecording, startRecording, stopRecording] = useRecorder();
   const [noMore, setNoMore] = useState(false);
+
+  const [otherUser, setOtherUser] = useState({});
 
   useEffect(() => {
     if (messages?.length < lim) {
@@ -119,10 +130,16 @@ const Chat = () => {
   }, [id, router]);
 
   useEffect(() => {
-    if (chat != {} && !id?.includes("group")) {
-      setUser(getUser(getOtherEmail(chat, currentUser.email.split("@")[0]), users));
+    if (chat != {} && currentUser != null && !id?.includes("group")) {
+      setUser(getUser(getOtherEmail(chat, currentUser?.email.split("@")[0]), users));
     }
   }, [currentUser, chat, id, users]);
+
+  useEffect(() => {
+    if(chat?.users?.length > 0 && you?.login) {
+      setOtherUser(getUser(chat?.users?.filter((itr) => itr.login !== you.login)[0].login, users));
+    }
+  });
 
   useEffect(() => {
     if (audioURL) {
@@ -131,8 +148,8 @@ const Chat = () => {
         await addDoc(collection(db, check, id, "messages"), {
           audio: audioURL,
           type: "audio/ogg",
-          login: currentUser?.email.split("@")[0],
-          username: currentUser?.displayName,
+          login: you?.login,
+          username: you?.username,
           timeStamp: serverTimestamp(),
         }).then(async () => {
           msgSend("audio");
@@ -155,7 +172,7 @@ const Chat = () => {
       setSending(true);
       const storageRef = ref(
         storage,
-        `chats/${fileType}/${you?.displayName}-${you?.uid}`
+        `chats/${fileType}/${you?.login}-${you?.uid}`
       );
       const uploadTask = uploadBytesResumable(storageRef, imgRef);
       uploadTask.on(
@@ -177,7 +194,8 @@ const Chat = () => {
             .then(async (url) => {
               await addDoc(collection(db, "chats", id, "messages"), {
                 text: msgToSend,
-                username: currentUser?.displayName,
+                login: you?.login,
+                username: you?.username,
                 timeStamp: serverTimestamp(),
                 [fileType]: url,
               });
@@ -191,8 +209,8 @@ const Chat = () => {
       const check = id?.includes("group") ? "groups" : "chats";
       await addDoc(collection(db, check, id, "messages"), {
         text: msgToSend,
-        login: currentUser?.email.split("@")[0],
-        username: currentUser?.displayName,
+        login: you?.login,
+        username: you?.username,
         timeStamp: serverTimestamp(),
       }).then(async () => {
         msgSend(msgToSend);
@@ -308,7 +326,7 @@ const Chat = () => {
     <div className={darkMode ? "bg-gray-100" : "dark bg-gray-900"}>
       <div className="relative max-w-3xl lg:mx-auto flex justify-center">
         <div
-          className="dark:bg-black bg-[url('https://browsecat.net/sites/default/files/neon-iphone-wallpapers-46872-643845-2936383.png')]
+          className="bg-black bg-[url('https://browsecat.net/sites/default/files/neon-iphone-wallpapers-46872-643845-2936383.png')]
             bg-no-repeat bg-cover bg-center w-full flex flex-col md:w-[700px] h-screen overflow-y-scroll scrollbar-hide"
         >
           {chat?.name && (
@@ -320,7 +338,7 @@ const Chat = () => {
               name={chat?.name}
               members={chat?.users}
               router={router}
-              you={currentUser?.login}
+              you={you?.login}
               id={id}
               users={users}
               getUser={getUser}
@@ -344,7 +362,7 @@ const Chat = () => {
             />
           )}
           {/* Chat Header */}
-          <section className="shadow-md bg-white sticky top-0 z-20 dark:bg-gray-900 dark:text-gray-200">
+          <section className="shadow-md sticky top-0 z-20 bg-gray-900 text-gray-200">
             <div className="flex items-center px-2 py-1">
               <ArrowLeftIcon
                 onClick={() => router?.back()}
@@ -352,18 +370,19 @@ const Chat = () => {
               />
               <div className="flex items-center justify-center p-[1px] rounded-full object-contain mx-2">
                 <div className="relative w-12 h-12">
-                  <Image
+                <Image
+                    unoptimized
                     loader={imgLoader}
                     loading="eager"
                     layout="fill"
                     src={
                       chat?.image
                         ? chat.image
-                        : user?.profImg
-                        ? user.profImg
-                        : user?.image
-                        ? user.image
-                        : require("../../public/userimg.jpg")
+                        : otherUser?.profImg
+                        ? otherUser.profImg
+                        : otherUser?.image
+                        ? otherUser.image
+                        : require("../../public/checker.png")
                     }
                     alt="prof"
                     className="rounded-full"
@@ -372,28 +391,26 @@ const Chat = () => {
               </div>
               <button
                 disabled={user ? (chat?.name ? true : false) : true}
-                onClick={() => router.push(`/profile/${user?.login}`)}
+                onClick={() => router.push(`/profile/${otherUser?.login}`)}
                 className="text-left"
               >
                 <div className="flex items-center">
                   <h1 className="font-bold">
                     {chat?.name
                       ? chat.name
-                      : user?.fullname
-                      ? user.fullname
-                      : user?.displayName
-                      ? user.displayName
-                      : "Loading..."}
+                        : otherUser ? otherUser?.fullname ? otherUser.fullname : otherUser.username : "Loading..."
+                      }
                   </h1>
-                  {!chat?.name && user?.login === "xabusva20" && (
-                    <div className="relative h-4 w-4">
+                  {!chat?.name && getAdminLogins().includes(otherUser?.login) && (
+                    <div className="relative h-4 w-4 mx-2">
                       <Image
+                        unoptimized
                         loader={imgLoader}
-                        src={require("../../public/verified.png")}
+                        src={require("../../public/emoji.gif")}
                         layout="fill"
                         loading="eager"
                         alt="profile"
-                        className="rounded-full"
+                        className="verified"
                       />
                     </div>
                   )}
@@ -409,6 +426,7 @@ const Chat = () => {
                       </span>
                     ) : (
                       <Moment
+                        suppressHydrationWarning 
                         fromNow
                         className="text-xs md:text-sm text-gray-400"
                       >
@@ -464,13 +482,13 @@ const Chat = () => {
               )}
               <div
                 hidden={!menu}
-                className="absolute right-3 top-16 z-10 w-44 bg-white rounded shadow dark:bg-gray-900"
+                className="absolute right-3 top-16 z-10 w-44 bg-white rounded shadow bg-gray-900"
               >
-                <ul className="py-1 text-sm text-gray-700 dark:text-gray-200">
+                <ul className="py-1 text-sm text-gray-700 text-gray-200">
                   <li>
                     <button
                       onClick={addUser}
-                      className="flex items-center w-full py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white text-left"
+                      className="flex items-center w-full py-2 px-4 hover:bg-gray-100 hover:bg-gray-600 hover:text-white text-left"
                     >
                       <UserAddIcon className="mr-2 h-5 w-5" />
                       Add User
@@ -482,7 +500,7 @@ const Chat = () => {
                         setMenu(false);
                         setEditGroup(true);
                       }}
-                      className="flex items-center w-full py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white text-left"
+                      className="flex items-center w-full py-2 px-4 hover:bg-gray-100 hover:bg-gray-600 hover:text-white text-left"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -505,7 +523,7 @@ const Chat = () => {
                         setMenu(false);
                         setShowMembers(true);
                       }}
-                      className="flex items-center w-full py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white text-left"
+                      className="flex items-center w-full py-2 px-4 hover:bg-gray-100 hover:bg-gray-600 hover:text-white text-left"
                     >
                       <UserGroupIcon className="mr-2 h-5 w-5" />
                       Members
@@ -518,7 +536,7 @@ const Chat = () => {
 
           {/* Chat Body */}
           <section className="flex-1 flex flex-col justify-end relative pt-16 pb-2">
-            {(chat?.description || currentUser?.bio) && (
+            {(chat?.description || otherUser?.bio) && (
               <div
                 className="absolute top-1 flex gap-2 items-center w-full bg-gray-700 border border-gray-800 text-gray-200 bg-opacity-40 px-4 py-3 rounded"
                 role="alert"
@@ -527,7 +545,7 @@ const Chat = () => {
                   {id?.includes("group") ? "Description: " : "Bio: "}
                 </strong>
                 <span className="block sm:inline truncate">
-                  {chat?.description || currentUser?.bio}
+                  {chat?.description || otherUser?.bio}
                 </span>
               </div>
             )}
@@ -538,6 +556,10 @@ const Chat = () => {
               >
                 Load More Messages
               </button>
+            )}
+            {isOpen && (
+              <Modal src={modalSrc} onClose={() => setIsOpen(false)}
+              />
             )}
             {messages?.length > 0 || chat?.users ? (
               messages?.map((_, i) => (
@@ -551,7 +573,7 @@ const Chat = () => {
                       : `mt-1 ${chat?.name ? "mt-5" : ""}`
                   }`}
                 >
-                  <div className="dark:text-gray-200 flex items-center rounded-md w-fit max-w-xs py-1 px-2 relative">
+                  <div className="text-gray-200 flex items-center rounded-md w-fit max-w-xs py-1 px-2 relative">
                     <div
                       className={`absolute top-1 rounded-full ${
                         messages[messages.length - 1 - i]?.data().login ===
@@ -572,6 +594,7 @@ const Chat = () => {
                       >
                         <div className="relative w-7 h-7">
                           <Image
+                            unoptimized
                             loader={imgLoader}
                             loading="eager"
                             layout="fill"
@@ -592,20 +615,25 @@ const Chat = () => {
                           ? `mr-9 ${
                               messages[messages.length - 1 - i]?.data().audio
                                 ? ""
-                                : "bg-green-400 bg-opacity-50 dark:bg-slate-600 dark:bg-opacity-50 backdrop-blur-sm"
+                                : "bg-green-400 bg-opacity-50 bg-slate-600 bg-opacity-50 backdrop-blur-sm"
                             }`
                           : `ml-9 ${
                               messages[messages.length - 1 - i]?.data().audio
                                 ? ""
-                                : "bg-blue-400 bg-opacity-50 dark:bg-slate-600 dark:bg-opacity-50 backdrop-blur-sm"
+                                : "bg-blue-400 bg-opacity-50 bg-slate-600 bg-opacity-50 backdrop-blur-sm"
                             }`
                       } py-1 px-3 rounded-lg font-normal`}
                     >
                       <p>{messages[messages.length - 1 - i]?.data().text}</p>
                       {messages[messages.length - 1 - i].data().image && (
-                        <div className="my-2 shadow-md p-2">
+                        <div className="my-2 shadow-md p-2 chatImg">
                           <Image
+                          
+                            onClick={(e) => showModal(e, messages[messages.length - 1 - i].data().image)}
+                            unoptimized
                             loader={imgLoader}
+                            loading="eager"
+                            layout="fill"
                             src={messages[messages.length - 1 - i].data().image}
                             alt="img"
                           />
@@ -628,7 +656,6 @@ const Chat = () => {
                           playsInline
                           controls
                           preload="none"
-                          poster="https://domainjava.com/wp-content/uploads/2022/07/Link-Bokeh-Full-111.90-l50-204-Chrome-Video-Bokeh-Museum-2022.jpg"
                           className="w-full h-auto max-h-[300px] overflow-hidden my-2"
                         >
                           <source
@@ -636,8 +663,8 @@ const Chat = () => {
                           />
                         </video>
                       )}
-                      <div className="flex text-gray-700 dark:text-gray-300 justify-end">
-                        <Moment fromNow className="text-[10px]">
+                      <div className="flex text-gray-700 text-gray-300 justify-end">
+                        <Moment fromNow suppressHydrationWarning className="text-[10px]">
                           {messages[messages.length - 1 - i]
                             ?.data()
                             ?.timeStamp?.toDate()}
@@ -662,9 +689,9 @@ const Chat = () => {
                     </div>
 
                     {messages[messages.length - 1 - i]?.data().login ===
-                      you.login && (
+                      you?.login && (
                       <TrashIcon
-                        className="h-5 w-5 absolute -left-6 cursor-pointer text-gray-800 overflow-hidden dark:text-gray-200"
+                        className="h-5 w-5 absolute -left-6 cursor-pointer text-gray-800 overflow-hidden text-gray-200"
                         onClick={() =>
                           unsendMessage(messages[messages.length - 1 - i].id)
                         }
@@ -672,7 +699,7 @@ const Chat = () => {
                     )}
                     {chat?.name &&
                       messages[messages.length - 1 - i]?.data().login !==
-                        you.displayName && (
+                        you?.login && (
                         <span className="absolute text-xs -top-3 left-11">
                           {getName(
                             getUser(
@@ -691,7 +718,7 @@ const Chat = () => {
           </section>
 
           {/* Chat Bottom */}
-          <section className="bg-gray-50 sticky bottom-0 z-20 shadow-sm px-1 dark:text-white dark:bg-gray-900">
+          <section className="bg-gray-50 sticky bottom-0 z-20 shadow-sm px-1 text-white bg-gray-900">
             {(selectFile || sending || isRecording) && (
               <div className="font-bold p-4 mr-3 text-gray-500 w-full text-right">
                 {sending ? (
@@ -703,11 +730,11 @@ const Chat = () => {
               </div>
             )}
             <form onSubmit={(e) => sendMessage(e)}>
-              <div className="flex items-center p-2 bg-gray-50 rounded-lg dark:bg-gray-900">
+              <div className="flex items-center p-2 bg-gray-50 rounded-lg bg-gray-900">
                 <button
                   onClick={() => filePickerRef.current.click()}
                   type="button"
-                  className="inline-flex justify-center py-2 text-gray-500 rounded-lg cursor-pointer dark:text-gray-400"
+                  className="inline-flex justify-center py-2 text-gray-500 rounded-lg cursor-pointer text-gray-400"
                 >
                   <svg
                     aria-hidden="true"
@@ -732,7 +759,7 @@ const Chat = () => {
                 />
                 <button
                   type="button"
-                  className="inline-flex justify-center py-2 text-gray-500 rounded-lg cursor-pointer dark:text-gray-400 ml-2"
+                  className="inline-flex justify-center py-2 text-gray-500 rounded-lg cursor-pointer text-gray-400 ml-2"
                 >
                   <svg
                     aria-hidden="true"
@@ -755,17 +782,17 @@ const Chat = () => {
                   name={text}
                   onChange={(e) => setText(e.target.value)}
                   rows="1"
-                  className="block mx-4 p-2 w-full text-sm text-gray-900 bg-white rounded-lg border border-gray-300 focus:ring-0 dark:bg-gray-800 dark:border-gray-800 dark:text-white resize-none scrollbar-none"
+                  className="block mx-4 p-2 w-full text-sm text-gray-900 bg-white rounded-lg border border-gray-300 focus:ring-0 bg-gray-800 border-gray-800 text-white resize-none scrollbar-none"
                   placeholder="Your message..."
                 ></textarea>
-                {text ? (
+                {text || selectFile ? (
                   <button
                     onClick={(e) => sendMessage(e)}
                     disabled={text || selectFile ? false : true}
                     type="submit"
-                    className={`transition-all duration-500 inline-flex justify-center py-2 text-gray-500 rounded-lg cursor-pointer dark:text-gray-400 ${
+                    className={`transition-all duration-500 inline-flex justify-center py-2 text-gray-500 rounded-lg cursor-pointer text-gray-400 ${
                       text || selectFile
-                        ? "animate-pulse dark:text-blue-600"
+                        ? "animate-pulse text-blue-600"
                         : ""
                     }`}
                   >

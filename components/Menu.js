@@ -18,6 +18,7 @@ import { useState } from "react";
 // import initBeams from "./initBeams";
 import { toast } from "react-toastify";
 import sendPush from "../utils/sendPush";
+import { getAdminLogins } from "../utils/utilityFunctions";
 
 const Menu = ({
   session,
@@ -43,19 +44,19 @@ const Menu = ({
 
   const signout = () => {
     setUserStatus(false);
-    sendPush(
-      "xabusva20",
-      "",
-      user?.fullname || user?.displayName,
-      "has loggedout",
-      user?.profImg || user?.image
-    );
-    if (typeof Notification !== "undefined") {
-      localStorage.setItem("beamsState", JSON.stringify(false));
-      // initBeams("", "", undefined, signOut);
-    }
+    // sendPush(
+    //   "xabusva20",
+    //   "",
+    //   user?.fullname || user?.displayName,
+    //   "has loggedout",
+    //   user?.profImg || user?.image
+    // );
+    // if (typeof Notification !== "undefined") {
+    //   localStorage.setItem("beamsState", JSON.stringify(false));
+    //   // initBeams("", "", undefined, signOut);
+    // }
   };
-
+  
   return (
     <div className="xl:hidden max-w-6xl mx-auto">
       <div className="flex items-center space-x-3">
@@ -70,9 +71,9 @@ const Menu = ({
           <LogoutIcon onClick={signout} className="h-8 w-8 my-2 btn" />
         )}
       </div>
-      <div className=" bg-white text-black dark:bg-gray-900 dark:text-gray-100 fixed bottom-0 w-full left-0 z-40 border-t border-gray-600">
+      <div className=" bg-white text-black bg-gray-900 text-gray-100 fixed bottom-0 w-full left-0 z-40 border-t border-gray-600">
         <ul className="flex justify-between py-3 px-5">
-          <li onClick={() => router.push(``)}>
+          <li onClick={() => router.push(`/`)}>
             {active === "/" ? (
               <HomeIcon className="h-7 w-7 btn" />
             ) : (
@@ -92,13 +93,15 @@ const Menu = ({
               <ASearchIcon className="h-7 w-7 btn" />
             )}
           </li>
-          <li onClick={handleAdd}>
-            {open ? (
-              <PlusCircleIcon className="h-7 w-7 btn" />
-            ) : (
-              <APlusCircleIcon className="h-7 w-7 btn" />
-            )}
-          </li>
+          {getAdminLogins().includes(user?.login) && (
+            <li onClick={handleAdd}>
+              {open ? (
+                <PlusCircleIcon className="h-7 w-7 btn" />
+              ) : (
+                <APlusCircleIcon className="h-7 w-7 btn" />
+              )}
+            </li>
+          )}
           <li onClick={() => router.push(`/chats`)}>
             {active.includes("Chat") ? (
               <ChatAlt2Icon className="h-7 w-7 btn" />

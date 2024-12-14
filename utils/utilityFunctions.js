@@ -40,6 +40,7 @@ const getValidUsers = (allUsers, currentUser) => {
         login === currentUser &&
         validUsers.findIndex((e) => e.id === doc.id) === -1
       ) {
+        console.log(doc);
         validUsers.push(doc);
       }
     });
@@ -66,12 +67,29 @@ const getName = (user) => {
   return user?.fullname ? user.fullname : user?.displayName;
 };
 
+const Modal = ({ src, onClose }) => {
+  return (
+    <div className="modal">
+      <span className="close" onClick={onClose}>
+        &times;
+      </span>
+      <img className="modal-content" src={src} alt="modal" />
+    </div>
+  );
+};
+
+const getAdminLogins = () => {
+  return ["xabusva20", "xabusva", "idemian"];
+}
+
 export {
   getChatMessages,
   getOtherEmail,
   getAllUsers,
+  getAdminLogins,
   getUser,
   getName,
   getValidUsers,
   getUserProfilePic,
+  Modal,
 };

@@ -1,9 +1,9 @@
 import { ArrowLeftIcon, SearchIcon } from "@heroicons/react/outline";
 import { onUserAuthStateChanged } from "../firebase";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Moment from "react-moment";
-import { getUserProfilePic, getUser, getName } from "../utils/utilityFunctions";
+import { getUserProfilePic, getUser, getName, getAdminLogins } from "../utils/utilityFunctions";
 
 const Likes = ({ setOpenLikes, users, likes, router }) => {
   const imgLoader = ({ src }) => { return `${src}`; };
@@ -20,10 +20,10 @@ const Likes = ({ setOpenLikes, users, likes, router }) => {
 
 
   return (
-    <div className="w-full md:max-w-3xl m-auto bg-gray-100 dark:text-gray-200 dark:bg-gray-900 fixed top-0 z-50 h-screen flex flex-col">
+    <div className="w-full md:max-w-3xl m-auto bg-gray-100 text-gray-200 bg-gray-900 fixed top-0 z-50 h-screen flex flex-col">
       {/* likes header */}
-      <section className="w-full md:max-w-3xl dark:bg-gray-900">
-        <div className="flex space-x-3 px-3 items-center dark:bg-gray-900 dark:text-white h-16">
+      <section className="w-full md:max-w-3xl bg-gray-900">
+        <div className="flex space-x-3 px-3 items-center bg-gray-900 text-white h-16">
           <ArrowLeftIcon
             className="h-6 w-6 cursor-pointer"
             onClick={() => setOpenLikes(false)}
@@ -32,7 +32,7 @@ const Likes = ({ setOpenLikes, users, likes, router }) => {
         </div>
 
         <div className="mx-3 mt-5 flex">
-          <div className="flex items-center space-x-3 m-auto h-9 bg-slate-200 dark:bg-gray-700 rounded-lg p-3 w-full text-sm md:w-[60%] dark:bg-opacity-40">
+          <div className="flex items-center space-x-3 m-auto h-9 bg-slate-200 bg-gray-700 rounded-lg p-3 w-full text-sm md:w-[60%] bg-opacity-40">
             <SearchIcon className="h-4 w-4" />
             <input
               className="bg-transparent outline-none focus:ring-0"
@@ -52,9 +52,9 @@ const Likes = ({ setOpenLikes, users, likes, router }) => {
         </div>
       </section>
 
-      <section className="flex-1 overflow-y-scroll scrollbar-hide bg-white dark:bg-gray-900">
+      <section className="flex-1 overflow-y-scroll scrollbar-hide bg-white bg-gray-900">
         {likes
-          ?.filter((user) => user.displayName.includes(search.toLowerCase()))
+          ?.filter((user) => user.username.toLowerCase().includes(search.toLowerCase()))
           .map((like, i) => (
             <div
               key={i}
@@ -63,6 +63,7 @@ const Likes = ({ setOpenLikes, users, likes, router }) => {
               <div className="relative h-16 flex items-center w-full">
                 <div className="relative h-14 w-14">
                   <Image
+                    unoptimized
                     loader={imgLoader}
                     loading="eager"
                     alt="image"
@@ -75,7 +76,7 @@ const Likes = ({ setOpenLikes, users, likes, router }) => {
                       getUser(like.login, users)?.active
                         ? "bg-green-400"
                         : "bg-slate-400"
-                    } border-[3px] border-white dark:border-gray-900 rounded-full`}
+                    } border-[3px] border-gray-900 rounded-full`}
                   ></span>
                 </div>
 
@@ -85,15 +86,16 @@ const Likes = ({ setOpenLikes, users, likes, router }) => {
                     className="font-semibold mt-1 cursor-pointer flex space-x-1 items-center"
                   >
                     {getName(getUser(like.login, users))}
-                    {like.login === "xabusva20" && (
-                      <div className="relative h-4 w-4">
+                    {getAdminLogins().includes(like.login) && (
+                      <div className="relative h-4 w-4 mx-2">
                         <Image
+                          unoptimized
                           loader={imgLoader}
-                          src={require("../public/verified.png")}
+                          src={require("../public/emoji.gif")}
                           layout="fill"
                           loading="eager"
                           alt="profile"
-                          className="rounded-full"
+                          className="verified"
                         />
                       </div>
                     )}
@@ -108,10 +110,10 @@ const Likes = ({ setOpenLikes, users, likes, router }) => {
                   )}
                 </div>
               </div>
-              {like.login !== currentUser.login && (
+              {like.login !== currentUser?.email.split("@")[0] && (
                 <button
                   onClick={() => router.push(`/profile/${like.login}`)}
-                  className="bg-gray-900 dark:bg-slate-600 dark:text-white bg-opacity-80 dark:bg-opacity-90 border-gray-400 py-1 px-6 text-xs font-semibold rounded-md"
+                  className="bg-gray-900 bg-slate-600 text-white bg-opacity-80 bg-opacity-90 border-gray-400 py-1 px-6 text-xs font-semibold rounded-md"
                 >
                   Profile
                 </button>

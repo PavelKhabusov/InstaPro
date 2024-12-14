@@ -6,7 +6,7 @@ import Model from "../components/Model";
 import { app, doc, setDoc, serverTimestamp, getDoc } from "firebase/firestore";
 import { db, onUserAuthStateChanged, auth } from "../firebase";
 import { useRecoilState } from "recoil";
-import { themeState, userActivity, beamsState } from "../atoms/states";
+import { themeState, userActivity } from "../atoms/states";
 // import initBeams from "../components/initBeams";
 import { toast } from "react-toastify";
 import { useRouter } from "next/router";
@@ -30,7 +30,7 @@ export default function Home() {
 
   const router = useRouter();
   const [darkMode, setDarkMode] = useRecoilState(themeState);
-  const [beamsInitialized, setBeamsInitialized] = useRecoilState(beamsState);
+  // const [beamsInitialized, setBeamsInitialized] = useRecoilState(beamsState);
   const [load, setLoad] = useState(false);
   const [active, setActive] = useRecoilState(userActivity);
   const [user, setUser] = useState(undefined);
@@ -38,9 +38,9 @@ export default function Home() {
   useEffect(() => {
     const theme = JSON.parse(localStorage.getItem("theme"));
     setDarkMode(theme);
-    const beams = JSON.parse(localStorage.getItem("beamsState"));
-    setBeamsInitialized(beams);
-  }, [setBeamsInitialized, setDarkMode]);
+    // const beams = JSON.parse(localStorage.getItem("beamsState"));
+    // setBeamsInitialized(beams);
+  }, [setDarkMode]);
 
   useEffect(() => {
     localStorage.setItem("theme", JSON.stringify(darkMode));
@@ -53,6 +53,7 @@ export default function Home() {
           if (prof.exists()) {
             setUser(prof.data());
           } else {
+            console.log(currentUser);
             await setDoc(doc(db, "profile", currentUser.email.split("@")[0]), {
               username: currentUser.displayName,
               login: currentUser.email.split("@")[0],
@@ -73,35 +74,35 @@ export default function Home() {
       // }
     }
     setActive(true);
-  }, [user, setActive, currentUser, beamsInitialized]);
+  }, [user, setActive, currentUser]);
 
   const callback = (entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        entry.target.play();
-      } else {
-        entry.target.pause();
-      }
-    });
+    // entries.forEach((entry) => {
+    //   if (entry.isIntersecting) {
+    //     entry.target.play();
+    //   } else {
+    //     entry.target.pause();
+    //   }
+    // });
   };
 
-  useEffect(() => {
-    let observer;
-    if (load) {
-      observer = new IntersectionObserver(callback, { threshold: 0.6 });
-      const elements = document.querySelectorAll("video");
-      elements.forEach((element) => {
-        observer.observe(element);
-      });
-    }
-    return () => {
-      observer?.disconnect();
-    };
-  }, [load]);
+  // useEffect(() => {
+  //   let observer;
+  //   if (load) {
+  //     observer = new IntersectionObserver(callback, { threshold: 0.6 });
+  //     const elements = document.querySelectorAll("video");
+  //     elements.forEach((element) => {
+  //       observer.observe(element);
+  //     });
+  //   }
+  //   return () => {
+  //     observer?.disconnect();
+  //   };
+  // }, [load]);
 
   return (
     <div
-      className={`h-screen overflow-y-scroll scrollbar-hide ${
+      className={`h-screen overflow-y-scroll scrollbar-hide -z-3 ${
         darkMode ? "bg-gray-50" : "dark bg-black"
       }`}
     >
@@ -109,6 +110,8 @@ export default function Home() {
         <title>Kartoteka | Social</title>
       </Head>
       <Header darkMode={darkMode} setDarkMode={setDarkMode} user={user} />
+      {/* <img alt="Light ray background" src="../..public/bghero.png" className="bghero"></img> */}
+
       <Feed setLoad={setLoad} user={user} />
       <Model />
     </div>

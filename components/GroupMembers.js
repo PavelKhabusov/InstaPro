@@ -21,10 +21,10 @@ const GroupMembers = ({
   const [menu, setMenu] = useState([]);
   const [defMenu, setDefMenu] = useState([]);
   const [admin] = useState(
-    members?.filter((member) => member.displayName === you)[0]?.admin || false
+    members?.filter((member) => member.login === you)[0]?.admin || false
   );
   const [creator] = useState(
-    members?.filter((member) => member.displayName === you)[0]?.creator || false
+    members?.filter((member) => member.login === you)[0]?.creator || false
   );
   useEffect(() => {
     const dummy = new Array(members?.length).fill(-1);
@@ -32,14 +32,14 @@ const GroupMembers = ({
     setMenu(dummy);
   }, [members?.length]);
 
-  const removeUser = async (displayName, status, user) => {
+  const removeUser = async (login, status, user) => {
     if (status && !creator) {
       alert(`You can not remove ${status} of this group`);
     } else {
       const uidRef = user.uid;
-      if (confirm(`Do you really want to remove ${displayName}?`)) {
+      if (confirm(`Do you really want to remove ${login}?`)) {
         const newMembers = await members?.filter(
-          (itruser) => itruser.displayName !== displayName
+          (itruser) => itruser.login !== login
         );
         if (newMembers?.length === 1) {
           await deleteDoc(doc(db, `groups/${id}`)).then(() => {
@@ -120,13 +120,13 @@ const GroupMembers = ({
         } absolute w-full inset-0 h-screen z-30`}
       ></div>
       <div
-        className={`absolute w-full max-w-[80%] h-screen text-white z-40 bg-gray-200 bg-opacity-70 dark:bg-gray-900 dark:bg-opacity-60 transition-all duration-700 overflow-y-scroll scrollbar-hide backdrop-blur-sm ${
+        className={`absolute w-full max-w-[80%] h-screen text-white z-40 bg-gray-200 bg-opacity-70 bg-gray-900 bg-opacity-60 transition-all duration-700 overflow-y-scroll scrollbar-hide backdrop-blur-sm ${
           showMembers
             ? "translate-x-0 opacity-100"
             : "-translate-x-[100%] opacity-0"
         }`}
       >
-        <div className="flex items-center justify-between font-bold text-xl p-3 sticky top-0 z-10 dark:bg-gray-900 dark:backdrop-blur-sm shadow-sm shadow-gray-700">
+        <div className="flex items-center justify-between font-bold text-xl p-3 sticky top-0 z-10 bg-gray-900 backdrop-blur-sm shadow-sm shadow-gray-700">
           <h1>Members🙂</h1>
           <h6 className="text-gray-400">{members?.length}</h6>
         </div>
@@ -141,21 +141,22 @@ const GroupMembers = ({
               }}
               className={`my-2 flex items-start gap-2 p-[3px] px-3 rounded-full object-contain cursor-pointer ${
                 menu[index] === 1 ? "scale-105" : "-z-10"
-              } transition transform duration-200 ease-out hover:bg-gray-200 dark:hover:bg-gray-600 relative`}
+              } transition transform duration-200 ease-out hover:bg-gray-200 hover:bg-gray-600 relative`}
             >
               <div className="relative w-12 h-12">
                 <Image
+                  unoptimized
                   loader={imgLoader}
                   loading="eager"
                   layout="fill"
-                  src={profImg || require("../public/userimg.jpg")}
+                  src={profImg || require("../public/checker.png")}
                   alt="story"
                   className="rounded-full"
                 />
                 <span
                   className={`top-0 right-0 absolute w-4 h-4 ${
                     curUser?.active ? "bg-green-400" : "bg-slate-400"
-                  } border-[3px] border-white dark:border-gray-900 rounded-full`}
+                  } border-[3px] border-gray-900 rounded-full`}
                 ></span>
               </div>
               <div className="flex flex-col">
@@ -177,13 +178,13 @@ const GroupMembers = ({
               </div>
               <div
                 hidden={menu[index] === -1}
-                className="absolute z-auto right-1 top-14 w-44 bg-white rounded-md shadow dark:bg-gray-500"
+                className="absolute z-auto right-1 top-14 w-44 bg-white rounded-md shadow bg-gray-500"
               >
-                <ul className="py-1 text-sm text-gray-700 dark:text-gray-200">
+                <ul className="py-1 text-sm text-gray-700 text-gray-200">
                   <li>
                     <button
                       onClick={() => router.push(`/profile/${user?.login}`)}
-                      className="flex items-center w-full py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white text-left"
+                      className="flex items-center w-full py-2 px-4 hover:bg-gray-100 hover:bg-gray-600 hover:text-white text-left"
                     >
                       Visit Profile
                     </button>
@@ -196,12 +197,12 @@ const GroupMembers = ({
                           e.stopPropagation();
                           setMenu(defMenu);
                           removeUser(
-                            user.displayName,
+                            user.login,
                             user.admin ? "admin" : "",
                             curUser
                           );
                         }}
-                        className="flex items-center w-full py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white text-left"
+                        className="flex items-center w-full py-2 px-4 hover:bg-gray-100 hover:bg-gray-600 hover:text-white text-left"
                       >
                         Remove User
                       </button>
@@ -212,8 +213,8 @@ const GroupMembers = ({
                       {!user?.admin && (
                         <li>
                           <button
-                            onClick={() => makeWhat(user.displayName, "makeAdmin")}
-                            className="flex items-center w-full py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white text-left"
+                            onClick={() => makeWhat(user.login, "makeAdmin")}
+                            className="flex items-center w-full py-2 px-4 hover:bg-gray-100 hover:bg-gray-600 hover:text-white text-left"
                           >
                             Make Admin
                           </button>
@@ -223,9 +224,9 @@ const GroupMembers = ({
                         <li>
                           <button
                             onClick={() =>
-                              makeWhat(user.displayName, "removeAdmin")
+                              makeWhat(user.login, "removeAdmin")
                             }
-                            className="flex items-center w-full py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white text-left"
+                            className="flex items-center w-full py-2 px-4 hover:bg-gray-100 hover:bg-gray-600 hover:text-white text-left"
                           >
                             Remove Admin
                           </button>

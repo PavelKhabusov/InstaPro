@@ -53,52 +53,50 @@ const Login = () => {
   };
 
   return (
-    <div className="flex flex-col m-auto items-center justify-center w-full h-screen p-20 dark:bg-gray-900">
-      <div className="relative h-28 w-28">
-        <Image
-          loader={imgLoader}
-          loading="eager"
-          src={require("../public/icon-512x512.png")}
-          alt="instaLogo"
-          layout="fill"
-          objectFit="contain"
-        />
-      </div>
-      <h6 className="px-2 py-1 text-sm font-bold italic mt-10 text-gray-600 dark:text-gray-400">
-        Welcome To Kartoteka
-      </h6>
-      <div className="mt-10">
-        {/* Sign-In Button for Google */}
-        {!loading && !user && (
-          <button
-            onClick={handleSignInWithGoogle}
-            className="p-2 px-3 bg-blue-400 shadow-lg border rounded-lg text-lg font-bold italic mt-2 text-white cursor-pointer hover:text-blue-500 hover:bg-gray-50 dark:bg-slate-900 dark:border-slate-500 dark:text-gray-300 dark:hover:text-blue-600"
-          >
-            Sign in with Google
-          </button>
-        )}
+    <div className="absolute right-0 top-0 flex flex-col m-auto items-center justify-center login">
+      {/* <h2>Аккаунт</h2> */}
+      <div className="authentication bg-[#171717] rounded-[20px] p-4">
+        <div className="flex flex-col">
+          {/* Sign-In Button for Google */}
+          {!loading && !user && (
+            <button
+              onClick={handleSignInWithGoogle}
+              className="flex items-center justify-center p-2 px-3 bg-[#3e3e3e] shadow-lg transition-all rounded-[30px] hover:rounded-[10px] text-lg text-white cursor-pointer bg-slate-900"
+            >
+            <img className="firebaseui-idp-icon mr-2" alt="" src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"></img>
+              Sign in with Google
+            </button>
+          )}
 
-        {/* Sign-In Button for Apple */}
-        {!loading && !user && (
-          <button
-            onClick={handleSignInWithApple}
-            className="p-2 px-3 bg-gray-900 shadow-lg border rounded-lg text-lg font-bold italic mt-4 text-white cursor-pointer hover:text-gray-500 hover:bg-gray-100 dark:bg-slate-900 dark:border-slate-500 dark:text-gray-300 dark:hover:text-gray-600"
-          >
-            Sign in with Apple
-          </button>
-        )}
+          {/* Sign-In Button for Apple */}
+          {!loading && !user && (
+            <button
+              onClick={handleSignInWithApple}
+              className="flex items-center justify-center p-2 px-3 bg-[#3e3e3e] shadow-lg transition-all rounded-[30px] hover:rounded-[10px] text-lg mt-2 text-white cursor-pointer bg-slate-900"
+            >
+            <img className="firebaseui-idp-icon mr-2" alt="" src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/apple.png"></img>
+              Sign in with Apple
+            </button>
+          )}
 
-        {loading && <p className="mt-2 text-gray-400">Loading...</p>}
+          {!user && (
+            <p className="mt-2 text-gray-400 text-center text-xs">
+             By continuing, you are indicating <br/>that you accept our <a rel="noreferrer" href="https://kartoteka.digital/privacy-policy.php" target="_blank">Privacy Policy</a>.
+            </p>
+          )}
 
-        {/* Sign-out Button if user is logged in */}
-        {user && (
-          <button
-            onClick={handleSignOut}
-            className="p-2 px-3 bg-red-500 shadow-lg border rounded-lg text-lg font-bold italic mt-2 text-white cursor-pointer"
-          >
-            Sign Out
-          </button>
-        )}
+          {loading && <p className="mt-2 text-gray-400">Loading...</p>}
+
+          {/* Sign-out Button if user is logged in */}
+          {user && (
+            <button
+              onClick={handleSignOut}
+              className="p-2 px-3 bg-red-500 shadow-lg border rounded-lg text-lg font-bold italic mt-2 text-white cursor-pointer"
+            >
+              Sign Out
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

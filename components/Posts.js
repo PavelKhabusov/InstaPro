@@ -16,7 +16,7 @@ import Loading from "./Loading";
 import { useRouter } from "next/router";
 import Likes from "../components/Likes";
 import { useCollectionData } from "react-firebase-hooks/firestore";
-import { postView, likesView, commentsView } from "../atoms/states";
+import { likesView, commentsView } from "../atoms/states";
 import { useRecoilState } from "recoil";
 import Comments from "./Comments";
 import { getUser } from "../utils/utilityFunctions";
@@ -28,6 +28,7 @@ const Posts = ({
   setLoad,
   showFollowers,
   showFollowings,
+  bookmarks
 }) => {
   const [currentUser, setUser] = useState(null); // State to hold the user session
 
@@ -49,7 +50,7 @@ const Posts = ({
   const [postComments, setPostComments] = useState([]);
   const [curPost, setCurPost] = useState(null);
   const router = useRouter();
-  const [view] = useRecoilState(postView);
+  // const [view] = useRecoilState(postView);
   const toastId = useRef(null);
   const [users, loading] = useCollectionData(collection(db, "profile"));
   const [openLikes, setOpenLikes] = useRecoilState(likesView);
@@ -61,7 +62,7 @@ const Posts = ({
     if (posts) {
       setLoad(true);
     }
-  }, [setLoad, posts]);
+  });
 
   useEffect(() => {
     if (router.pathname === "/") {
@@ -80,11 +81,23 @@ const Posts = ({
   });
 
   useEffect(() => {
-    if (router.pathname !== "/" && profile) {
+    if (router.pathname !== "/" && bookmarks && bookmarks.length > 0) {
       unsubscribe = onSnapshot(
         query(
           collection(db, "posts"),
-          where("username", "==", profile),
+          where("id", "in", bookmarks),
+          orderBy("timeStamp", "desc")
+        ),
+        (snapshot) => {
+          setPosts(snapshot?.docs);
+          setTotalPosts(snapshot.docs?.length);
+        }
+      )
+    } else if (router.pathname !== "/" && profile) {
+      unsubscribe = onSnapshot(
+        query(
+          collection(db, "posts"),
+          where("login", "==", profile),
           orderBy("timeStamp", "desc")
         ),
         (snapshot) => {
@@ -136,13 +149,13 @@ const Posts = ({
         />
       )}
       <div
-        className={`relative mb-14 ${
+        className={`relative ${
           showFollowers || showFollowings ? "hidden" : ""
         } ${
-          router.asPath !== "/" && !view
+          router.asPath !== "/" || 1
             ? `grid ${
-                posts?.length ? "grid-cols-3" : "grid-cols-1"
-              } place-items-center md:flex md:flex-wrap p-3 justify-left`
+                posts?.length || 1 ? "grid-cols-3" : "grid-cols-1"
+              } place-items-center p-3 justify-left`
             : ""
         }`}
       >

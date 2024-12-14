@@ -2,8 +2,8 @@ import { ArrowLeftIcon, SearchIcon } from "@heroicons/react/outline";
 import { useEffect, useState } from "react";
 import Moment from "react-moment";
 import Image from "next/image";
-import { getUserProfilePic, getName, getUser } from "../utils/utilityFunctions";
-const randomImg = require("../public/userimg.jpg");
+import { getUserProfilePic, getName, getUser, getAdminLogins } from "../utils/utilityFunctions";
+const randomImg = require("../public/checker.png");
 
 const FollowList = ({
   setShowFollowers,
@@ -32,7 +32,7 @@ const FollowList = ({
     <div hidden={showFollowers || showFollowings ? false : true}>
       {/* Followers header */}
       <section className="sticky top-0 z-40 w-full md:max-w-3xl">
-        <div className="flex space-x-3 px-3 items-center bg-blue-500 dark:bg-gray-900 text-white h-16">
+        <div className="flex space-x-3 px-3 items-center bg-blue-500 bg-gray-900 text-white h-16">
           <ArrowLeftIcon
             className="h-6 w-6 cursor-pointer"
             onClick={
@@ -47,7 +47,7 @@ const FollowList = ({
         </div>
 
         <div className="mx-3 mt-5 flex border-b-2 pb-4 border-gray-700">
-          <div className="flex items-center space-x-3 m-auto h-9 bg-slate-100 dark:bg-gray-700 rounded-lg p-3 w-full text-sm md:w-[60%] dark:bg-opacity-40">
+          <div className="flex items-center space-x-3 m-auto h-9 bg-slate-100 bg-gray-700 rounded-lg p-3 w-full text-sm md:w-[60%] bg-opacity-40">
             <SearchIcon className="h-4 w-4" />
             <input
               className="bg-transparent outline-none focus:ring-0"
@@ -73,6 +73,7 @@ const FollowList = ({
                 <div className="h-16 flex items-center w-full">
                   <div className="relative h-14 w-14">
                     <Image
+                      unoptimized
                       loader={imgLoader}
                       loading="eager"
                       alt="image"
@@ -89,7 +90,7 @@ const FollowList = ({
                         getUser(user.login, users)?.active
                           ? "bg-green-400"
                           : "bg-slate-400"
-                      } border-[3px] border-white dark:border-gray-900 rounded-full`}
+                      } border-[3px] border-gray-900 rounded-full`}
                     ></span>
                   </div>
                   <div className="ml-3">
@@ -98,15 +99,16 @@ const FollowList = ({
                       className="font-bold cursor-pointer flex items-center"
                     >
                       {getName(getUser(user.login, users))}
-                      {user.login === "xabusva20" && (
-                        <div className="relative h-4 w-4">
+                      {getAdminLogins().includes(user.login) && (
+                        <div className="relative h-4 w-4 mx-2">
                           <Image
+                            unoptimized
                             loader={imgLoader}
-                            src={require("../public/verified.png")}
+                            src={require("../public/emoji.gif")}
                             layout="fill"
                             loading="eager"
                             alt="profile"
-                            className="rounded-full"
+                            className="verified"
                           />
                         </div>
                       )}

@@ -6,7 +6,8 @@ class MyDocument extends Document {
     return (
       <Html>
         <Head>
-          <link rel="apple-touch-icon" href="/social/icon.png"></link>
+          <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"></link>
+          <link rel="stylesheet" href="https://kartoteka.digital/style.css" />
           <meta name="theme-color" content="#fff" />
         </Head>
         <body>

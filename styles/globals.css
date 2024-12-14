@@ -9,7 +9,7 @@
 
 @layer components {
     .navBtn {
-        @apply hidden h-6 md:inline-flex cursor-pointer transition-all duration-150 ease-out;
+        @apply h-6 md:inline-flex cursor-pointer transition-all duration-150 ease-out;
     }
 
     .btn {
@@ -21,9 +21,202 @@
     outline: none;
     -webkit-tap-highlight-color: transparent;
 }
-
+h2 {
+        letter-spacing: -0.025em;
+    font-size: 3.5rem;
+    background: linear-gradient(to right bottom, #fff 30%, hsla(0, 0%, 100%, 0.5));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: unset;
+    margin-bottom: 20px;
+}
+.btn {
+    color: #fff;
+    padding: 0;
+}
+.btn:hover {
+    color: #ffffff80
+}
+.btn.text-red-500 {
+    color: #bf2120;
+}
+.btn.text-yellow-500 {
+    color: rgb(234 179 8 / 1)
+}
 audio {
     filter: sepia(20%) saturate(70%) grayscale(1) contrast(99%) invert(12%);
     width: 240px;
     height: 35px;
+}
+.dark .dark\:bg-black {
+    background: none !important;
+}
+.head {
+    margin-top: 10px;
+    backdrop-filter: blur(20px);
+    background: #ffffff10;
+    border-radius: 20px;
+}
+.postImg {
+    position: relative;
+    aspect-ratio: 1/1;
+    overflow: hidden;
+}
+.postImg img {
+    object-fit: cover !important;
+    transition: 1s all ease-in-out;
+    transform: scale(1);
+    height: 100%;
+}
+.postImg:hover img {
+    transform: scale(1.1);
+}
+.verified {
+    border-radius: 5px;
+}
+.grid-cols-3 {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    /* grid-template-columns: repeat(3, minmax(0, 1fr)); */
+}
+.grid-cols-3 > div {
+    flex-basis: calc((100% - 20px) / 3);
+}
+.max-w-3xl {
+    max-width: 1140px;
+}
+video {
+    height: 100%;
+    object-fit: cover;
+}
+.rounded-quad {
+    border-radius: 35%;
+}
+.chatImg {
+    min-width: 200px;
+    min-height: 200px;
+    border-radius: 10px;
+    
+}
+.chatImg img {
+    object-fit: contain;
+}
+
+/* The Modal (background) */
+.modal {
+  position: fixed; /* Stay in place */
+  z-index: 30; /* Sit on top */
+  padding-top: 100px; /* Location of the box */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgb(0, 0, 0); /* Fallback color */
+  background-color: rgba(0, 0, 0, 0.7); /* Black w/ opacity */
+}
+
+/* Modal Content (image) */
+.modal-content {
+  margin: auto;
+  display: block;
+  width: 80%;
+  max-width: 700px;
+}
+/* Add Animation */
+.modal-content {
+  -webkit-animation-name: zoom;
+  -webkit-animation-duration: 0.6s;
+  animation-name: zoom;
+  animation-duration: 0.6s;
+}
+
+@-webkit-keyframes zoom {
+  from {
+    -webkit-transform: scale(0);
+  }
+  to {
+    -webkit-transform: scale(1);
+  }
+}
+
+@keyframes zoom {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+/* The Close Button */
+.modal .close {
+  position: absolute;
+  top: 15px;
+  right: 35px;
+  color: #f1f1f1;
+  font-size: 40px;
+  font-weight: bold;
+  transition: 0.3s;
+}
+
+.modal .close:hover,
+.modal .close:focus {
+  color: #bbb;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* 100% Image Width on Smaller Screens */
+@media only screen and (max-width: 700px) {
+  .modal-content {
+    width: 100%;
+  }
+}
+
+.privacy.feed {
+    background-image: radial-gradient(46.99% 43.05% at 2.58% 100%, rgb(50 46 56 / 40%) 0, transparent 100%), radial-gradient(55.18% 55.16% at 12.42% -3.42%, rgb(220 170 112 / 30%) 0, transparent 100%);
+    padding: 5px;
+}
+@media (max-width: 768px) {
+    
+    .grid-cols-3 > div {
+        flex-basis: calc((100% - 20px) / 2);
+    }
+}
+@media (max-width: 576px) {
+    .grid-cols-3 > div {
+        flex-basis: 100%;
+    }
+    .privacy {
+        margin-left: -5vw;
+        margin-right: -5vw;
+        width: 100vw;
+    }
+}
+
+@media (min-width: 768px) {
+    .container {
+        max-width: 720px;
+    }
+}
+@media (min-width: 992px) {
+    .container {
+        max-width: 960px;
+    }
+}
+@media (min-width: 1200px) {
+    .container {
+        max-width: 1140px;
+    }
+}
+
+.firebaseui-idp-icon {
+    border: none;
+    display: inline-block;
+    height: 18px;
+    vertical-align: middle;
+    width: 18px;
 }
